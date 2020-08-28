@@ -39,7 +39,7 @@ class MenuBar(Gtk.Frame):
 class menubar_button(Gtk.Button):
     def __init__(self, icon_name):
         Gtk.Button.__init__(self)
-        self.add(Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.MENU))
+        self.add(Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DND))
 
 
 # =============================================================================
@@ -50,6 +50,14 @@ class main(MenuBar):
     def __init__(self):
         MenuBar.__init__(self)
         box = self.get_box()
+
+        # excel button
+        self.but_excel = menubar_button(icon_name='x-office-spreadsheet')
+        box.pack_start(self.but_excel, expand=False, fill=True, padding=0)
+
+        # powerpoint button
+        self.but_ppt = menubar_button(icon_name='x-office-presentation')
+        box.pack_start(self.but_ppt, expand=False, fill=True, padding=0)
 
         # exit button
         self.but_exit = menubar_button(icon_name='application-exit')
@@ -67,7 +75,12 @@ class main(MenuBar):
     #    image : image name of button
     # -------------------------------------------------------------------------
     def get_obj(self, name_image):
+        if name_image == 'excel':
+            return self.but_excel
         if name_image == 'info':
             return self.but_info
         if name_image == 'exit':
             return self.but_exit
+
+# ---
+# PROGRAM END
