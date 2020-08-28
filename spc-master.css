@@ -1,0 +1,11 @@
+.header {
+  padding: 2px 10px;
+  border: 1px solid #ccc;
+  background-color: #ddf;
+  background: #ddf;
+  box-shadow: 1px 1px 2px #ccc;
+}
+.sheet {
+  padding: 2px 10px;
+  border: 1px solid #ccc;
+}
