@@ -77,6 +77,8 @@ class main(MenuBar):
     def get_obj(self, name_image):
         if name_image == 'excel':
             return self.but_excel
+        if name_image == 'ppt':
+            return self.but_ppt
         if name_image == 'info':
             return self.but_info
         if name_image == 'exit':

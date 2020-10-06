@@ -111,10 +111,6 @@ class SPCMaster(Gtk.Window):
     #    instance of container
     # -------------------------------------------------------------------------
     def create_page_part(self, tabname):
-        #notebook = Gtk.Notebook()
-        #notebook.set_tab_pos(Gtk.PositionType.TOP)
-        #self.mainpanel.append_page(notebook, Gtk.Label(label=tabname))
-
         # DATA tab
         grid_data = Gtk.Grid()
         scrwin_data = Gtk.ScrolledWindow()
@@ -123,30 +119,9 @@ class SPCMaster(Gtk.Window):
             Gtk.PolicyType.AUTOMATIC,
             Gtk.PolicyType.AUTOMATIC
         )
-        #notebook.append_page(scrwin_data, Gtk.Label(label='DATA'))
         self.mainpanel.append_page(scrwin_data, Gtk.Label(label=tabname))
 
-        # PLOT tab (tentative)
-        #box_plot = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        #box_plot.set_homogeneous(True)
-        #scrwin_plot = Gtk.ScrolledWindow()
-        #scrwin_plot.add(box_plot)
-        #scrwin_plot.set_policy(
-        #    Gtk.PolicyType.AUTOMATIC,
-        #    Gtk.PolicyType.AUTOMATIC
-        #)
-        #notebook.append_page(scrwin_plot, Gtk.Label(label='PLOT'))
-
-        # notebook.connect('switch-page', self.show_parent_tab_name, tabname)
-
-        #return grid_data, box_plot
         return grid_data
-
-    #def show_parent_tab_name(self, page, child, tab_index, tabname):
-    #    print(page)
-    #    print(child)
-    #    print(tab_index)
-    #    print(tabname)
 
     # -------------------------------------------------------------------------
     #  create_tabs
@@ -180,7 +155,6 @@ class SPCMaster(Gtk.Window):
         # create tab for etch part
         for name_part in list_part:
             # create initial tab for part
-            #grid_part_data, box_part_plot = self.create_page_part(name_part)
             grid_part_data = self.create_page_part(name_part)
 
             # get dataframe of part data
@@ -188,11 +162,6 @@ class SPCMaster(Gtk.Window):
 
             # create tab to show part data
             self.create_tab_part_data(grid_part_data, df_part)
-
-            # get parameter list
-            #list_param = sheet.get_param_list(name_part)
-
-            #self.create_tab_part_plot(box_part_plot, df_part, name_part, list_param, sheet)
 
     # -------------------------------------------------------------------------
     #  create_tab_master
@@ -215,7 +184,6 @@ class SPCMaster(Gtk.Window):
         # first column
         widget = Gtk.Label(name='LabelHead', label='#')
         widget.set_hexpand(True)
-        widget.set_alignment(xalign=0.5, yalign=0.5)
         widget.get_style_context().add_class("header");
         grid.attach(widget, x, y, 1, 1)
         x += 1
@@ -224,7 +192,6 @@ class SPCMaster(Gtk.Window):
         for item in df.columns.values:
             widget = Gtk.Label(name='LabelHead', label=item)
             widget.set_hexpand(True)
-            widget.set_alignment(xalign=0.5, yalign=0.5)
             widget.get_style_context().add_class("header");
             grid.attach(widget, x, y, 1, 1)
             x += 1
@@ -255,9 +222,8 @@ class SPCMaster(Gtk.Window):
                 if x == 0:
                     widget = Gtk.Button(label=item)
                 else:
-                    widget = Gtk.Label(name='Label', label=item)
+                    widget = Gtk.Label(name='Label', label=item, xalign=xpos)
                     widget.set_hexpand(True)
-                    widget.set_alignment(xalign=xpos, yalign=0.5)
 
                 widget.get_style_context().add_class("sheet");
                 grid.attach(widget, x, y, 1, 1)
@@ -287,7 +253,6 @@ class SPCMaster(Gtk.Window):
         # first column
         lab = Gtk.Label(name='LabelHead', label='#')
         lab.set_hexpand(True)
-        lab.set_alignment(xalign=0.5, yalign=0.5)
         lab.get_style_context().add_class("header");
         grid.attach(lab, x, y, 1, 1)
         x += 1
@@ -296,7 +261,6 @@ class SPCMaster(Gtk.Window):
         for item in df.columns.values:
             lab = Gtk.Label(name='LabelHead', label=item)
             lab.set_hexpand(True)
-            lab.set_alignment(xalign=0.5, yalign=0.5)
             lab.get_style_context().add_class("header");
             grid.attach(lab, x, y, 1, 1)
             x += 1
@@ -321,7 +285,7 @@ class SPCMaster(Gtk.Window):
 
                 lab = Gtk.Label(name='Label', label=item)
                 lab.set_hexpand(True)
-                lab.set_alignment(xalign=xpos, yalign=0.5)
+                #lab.set_alignment(xalign=xpos, yalign=0.5)
                 lab.get_style_context().add_class("sheet");
                 grid.attach(lab, x, y, 1, 1)
                 x += 1
@@ -457,13 +421,16 @@ class SPCMaster(Gtk.Window):
             self.calc(filename)
 
 
+# -----------------------------------------------------------------------------
+#  MAIN
+# -----------------------------------------------------------------------------
 provider = Gtk.CssProvider()
 provider.load_from_path('./spc-master.css')
 Gtk.StyleContext.add_provider_for_screen (
     Gdk.Screen.get_default(),
     provider,
     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-);
+)
 win = SPCMaster()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
