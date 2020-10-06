@@ -221,6 +221,7 @@ class SPCMaster(Gtk.Window):
 
                 if x == 0:
                     widget = Gtk.Button(label=item)
+                    widget.connect('clicked', self.on_param_clicked)
                 else:
                     widget = Gtk.Label(name='Label', label=item, xalign=xpos)
                     widget.set_hexpand(True)
@@ -420,6 +421,11 @@ class SPCMaster(Gtk.Window):
         if filename is not None:
             self.calc(filename)
 
+    # -------------------------------------------------------------------------
+    #  on_param_clicked - create plot for specified parameter
+    # -------------------------------------------------------------------------
+    def on_param_clicked(self, widget):
+        print(widget.get_label())
 
 # -----------------------------------------------------------------------------
 #  MAIN
