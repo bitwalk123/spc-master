@@ -6,6 +6,9 @@ from matplotlib.figure import Figure
 from module import utils
 
 
+# =============================================================================
+#  CharWin - single chart window
+# =============================================================================
 class ChartWin(Gtk.Window):
 
     def __init__(self, info_master, widget, sheet):
@@ -75,6 +78,9 @@ class ChartWin(Gtk.Window):
         self.destroy()
 
 
+# =============================================================================
+#  Trend - trend chart
+# =============================================================================
 class Trend():
     def get_canvas(self, sheet, name_part, param):
         metrics = sheet.get_metrics(name_part, param)
@@ -147,3 +153,6 @@ class Trend():
 
         canvas = FigureCanvas(fig)
         return canvas
+
+# ---
+# PROGRAM END

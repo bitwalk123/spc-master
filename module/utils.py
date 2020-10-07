@@ -1,3 +1,6 @@
+# =============================================================================
+#  info_page - control selection on grid table
+# =============================================================================
 class info_page():
     grid = None
 
@@ -36,9 +39,14 @@ class info_page():
                         child.get_style_context().add_class("sheet")
 
 
+# =============================================================================
+#  register
+# =============================================================================
 class register():
+    value = None
+
     def __init__(self, value):
-        self.value = value
+        self.set(value)
 
     def inc(self):
         self.value += 1
@@ -48,3 +56,9 @@ class register():
 
     def get(self):
         return self.value
+
+    def set(self, value):
+        self.value = value
+
+# ---
+# PROGRAM END
