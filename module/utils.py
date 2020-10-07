@@ -24,8 +24,8 @@ class info_page():
         for child in self.grid.get_children():
             x = self.grid.child_get_property(child, 'left-attach')
             y = self.grid.child_get_property(child, 'top-attach')
-            if  x > 0:
-                if y == int(row):
+            if x > 0:
+                if y == row:
                     if child.get_style_context().has_class("sheet"):
                         child.get_style_context().remove_class("sheet")
                     child.get_style_context().add_class("select")
@@ -34,4 +34,3 @@ class info_page():
                         if child.get_style_context().has_class("select"):
                             child.get_style_context().remove_class("select")
                         child.get_style_context().add_class("sheet")
-

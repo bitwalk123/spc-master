@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk
 
-from module import excel, dlg, mbar, utils
+from module import excel, dlg, mbar, pcs, utils
 
 
 class SPCMaster(Gtk.Window):
@@ -276,23 +276,6 @@ class SPCMaster(Gtk.Window):
             y += 1
 
     # -------------------------------------------------------------------------
-    #  create_tab_part_plot
-    #  creating PLOT tab in (Part Number) tab
-    #
-    #  argument
-    #    container  : container where creating plot
-    #    df         : dataframe for specified (Part Number)
-    #    list_param : parameter list to plot
-    #    sheet      : instance of Excel sheet
-    #
-    #  return
-    #    (none)
-    # -------------------------------------------------------------------------
-    def create_tab_part_plot(self, box, df, name_part, list_param, sheet):
-        for param in list_param:
-            self.generate_spc_plot(box, df, name_part, param, sheet)
-
-    # -------------------------------------------------------------------------
     #  generate_spc_plot
     # -------------------------------------------------------------------------
     def generate_spc_plot(self, box, df, name_part, param, sheet):
@@ -398,8 +381,17 @@ class SPCMaster(Gtk.Window):
     #  on_param_clicked - create plot for specified parameter
     # -------------------------------------------------------------------------
     def on_param_clicked(self, widget, sheet):
-        r = widget.get_label()
+        r = int(widget.get_label())
         self.info_master.select_row(r)
+
+        df_master = sheet.get_master()
+        df_row = (df_master.iloc[r - 1])
+        name_part = df_row['Part Number']
+        name_param = df_row['Parameter Name']
+
+        dialog = pcs.TrendChart(sheet, name_part, name_param)
+        dialog.run()
+        dialog.destroy()
 
 
 # -----------------------------------------------------------------------------
