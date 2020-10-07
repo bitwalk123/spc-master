@@ -9,12 +9,12 @@ from matplotlib.figure import Figure
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk
 
-from module import excel, dlg, mbar
+from module import excel, dlg, mbar, utils
 
 
 class SPCMaster(Gtk.Window):
     mainpanel = None
-    grid_master = None
+    info_master = None
 
     def __init__(self):
         Gtk.Window.__init__(self, title="SPC Master")
@@ -40,8 +40,17 @@ class SPCMaster(Gtk.Window):
         box.pack_start(self.mainpanel, expand=True, fill=True, padding=0)
 
         # master tab
-        page_master = self.create_page_master()
+        grid_master = Gtk.Grid()
+        page_master = Gtk.ScrolledWindow()
+        page_master.add(grid_master)
+        page_master.set_policy(
+            Gtk.PolicyType.AUTOMATIC,
+            Gtk.PolicyType.AUTOMATIC
+        )
         self.mainpanel.append_page(page_master, Gtk.Label(label="Master"))
+
+        # create instance to store master page information
+        self.info_master = utils.info_page(grid_master)
 
     # -------------------------------------------------------------------------
     #  calc
@@ -76,29 +85,6 @@ class SPCMaster(Gtk.Window):
 
         # update GUI
         self.show_all()
-
-    # -------------------------------------------------------------------------
-    #  create_page_master - creating 'Master' page
-    #
-    #  argument
-    #    (none)
-    #
-    #  return
-    #    instance of container
-    # -------------------------------------------------------------------------
-    def create_page_master(self):
-        grid = Gtk.Grid()
-
-        # scrollbar window
-        scrwin = Gtk.ScrolledWindow()
-        scrwin.add(grid)
-        scrwin.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC
-        )
-        self.grid_master = grid
-
-        return scrwin
 
     # -------------------------------------------------------------------------
     #  create_panel_part
@@ -137,14 +123,8 @@ class SPCMaster(Gtk.Window):
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  'Master' tab
 
-        # get 'Master' grid container
-        grid_master = self.get_grid_master()
-
-        # get 'Master' datafrane
-        df_master = sheet.get_master()
-
         # create 'Master' tab
-        self.create_tab_master(grid_master, df_master)
+        self.create_tab_master(sheet)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  PART tab
@@ -168,23 +148,25 @@ class SPCMaster(Gtk.Window):
     #  creating 'Master' tab
     #
     #  argument
-    #    grid : grid container where creating table
-    #    df   : dataframe for 'Master'
+    #    sheet   : object of Excel sheet
     #
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def create_tab_master(self, grid, df):
-        x = 0;  # column
-        y = 0;  # row
+    def create_tab_master(self, sheet):
+        grid = self.info_master.grid
+        df = sheet.get_master()
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  table header
 
+        x = 0;  # column
+        y = 0;  # row
+
         # first column
         widget = Gtk.Label(name='LabelHead', label='#')
         widget.set_hexpand(True)
-        widget.get_style_context().add_class("header");
+        widget.get_style_context().add_class("header")
         grid.attach(widget, x, y, 1, 1)
         x += 1
 
@@ -192,7 +174,7 @@ class SPCMaster(Gtk.Window):
         for item in df.columns.values:
             widget = Gtk.Label(name='LabelHead', label=item)
             widget.set_hexpand(True)
-            widget.get_style_context().add_class("header");
+            widget.get_style_context().add_class("header")
             grid.attach(widget, x, y, 1, 1)
             x += 1
 
@@ -221,12 +203,12 @@ class SPCMaster(Gtk.Window):
 
                 if x == 0:
                     widget = Gtk.Button(label=item)
-                    widget.connect('clicked', self.on_param_clicked, df)
+                    widget.connect('clicked', self.on_param_clicked, sheet)
                 else:
                     widget = Gtk.Label(name='Label', label=item, xalign=xpos)
                     widget.set_hexpand(True)
 
-                widget.get_style_context().add_class("sheet");
+                widget.get_style_context().add_class("sheet")
                 grid.attach(widget, x, y, 1, 1)
 
                 x += 1
@@ -284,9 +266,9 @@ class SPCMaster(Gtk.Window):
 
                 item = str(item)
 
-                lab = Gtk.Label(name='Label', label=item)
+                lab = Gtk.Label(name='Label', label=item, xalign=xpos)
                 lab.set_hexpand(True)
-                #lab.set_alignment(xalign=xpos, yalign=0.5)
+                # lab.set_alignment(xalign=xpos, yalign=0.5)
                 lab.get_style_context().add_class("sheet");
                 grid.attach(lab, x, y, 1, 1)
                 x += 1
@@ -310,6 +292,9 @@ class SPCMaster(Gtk.Window):
         for param in list_param:
             self.generate_spc_plot(box, df, name_part, param, sheet)
 
+    # -------------------------------------------------------------------------
+    #  generate_spc_plot
+    # -------------------------------------------------------------------------
     def generate_spc_plot(self, box, df, name_part, param, sheet):
         metrics = sheet.get_metrics(name_part, param)
         x = df['Sample']
@@ -384,18 +369,6 @@ class SPCMaster(Gtk.Window):
         box.pack_start(canvas, expand=False, fill=True, padding=0)
 
     # -------------------------------------------------------------------------
-    #  get_grid_master - get grid instance for 'Master' page
-    #
-    #  argument
-    #    (none)
-    #
-    #  return
-    #    instance of grid for 'Master' page
-    # -------------------------------------------------------------------------
-    def get_grid_master(self):
-        return self.grid_master
-
-    # -------------------------------------------------------------------------
     #  on_click_app_exit - Exit Application, emitting 'destroy' signal
     #
     #  argument
@@ -424,17 +397,17 @@ class SPCMaster(Gtk.Window):
     # -------------------------------------------------------------------------
     #  on_param_clicked - create plot for specified parameter
     # -------------------------------------------------------------------------
-    def on_param_clicked(self, widget, df):
-        r =  widget.get_label()
-        print(widget.get_label())
-        print(df)
+    def on_param_clicked(self, widget, sheet):
+        r = widget.get_label()
+        self.info_master.select_row(r)
+
 
 # -----------------------------------------------------------------------------
 #  MAIN
 # -----------------------------------------------------------------------------
 provider = Gtk.CssProvider()
 provider.load_from_path('./spc-master.css')
-Gtk.StyleContext.add_provider_for_screen (
+Gtk.StyleContext.add_provider_for_screen(
     Gdk.Screen.get_default(),
     provider,
     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
