@@ -34,3 +34,17 @@ class info_page():
                         if child.get_style_context().has_class("select"):
                             child.get_style_context().remove_class("select")
                         child.get_style_context().add_class("sheet")
+
+
+class register():
+    def __init__(self, value):
+        self.value = value
+
+    def inc(self):
+        self.value += 1
+
+    def dec(self):
+        self.value -= 1
+
+    def get(self):
+        return self.value

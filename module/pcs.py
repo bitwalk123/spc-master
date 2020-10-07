@@ -3,27 +3,80 @@ from gi.repository import Gtk
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 
+from module import utils
 
-class TrendChart(Gtk.Dialog):
 
-    def __init__(self, sheet, name_part, name_param):
-        Gtk.Dialog.__init__(self, name_part + " - " + name_param)
-        self.add_button(Gtk.STOCK_OK, Gtk.ResponseType.OK)
-        self.set_default_size(1000, 0)
-        self.set_resizable(False)
-        self.set_modal(True)
+class ChartWin(Gtk.Window):
+
+    def __init__(self, info_master, widget, sheet):
+        Gtk.Window.__init__(self)
+
+        row = utils.register(int(widget.get_label()))
+        info_master.select_row(row.get())
+
+        df_master = sheet.get_master()
+        df_row = (df_master.iloc[row.get() - 1])
+        name_part = df_row['Part Number']
+        name_param = df_row['Parameter Name']
+
+        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
+        #  HeaderBar
+        hbar = Gtk.HeaderBar()
+        hbar.set_show_close_button(True)
+        hbar.props.title = name_part + " - " + name_param
+        self.set_titlebar(hbar)
+
+        box_header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+
+        image_left = Gtk.Image.new_from_icon_name('go-previous', Gtk.IconSize.BUTTON)
+        but_left = Gtk.Button()
+        but_left.set_image(image_left)
+        box_header.add(but_left)
+
+        image_right = Gtk.Image.new_from_icon_name('go-next', Gtk.IconSize.BUTTON)
+        but_right = Gtk.Button()
+        but_right.set_image(image_right)
+        box_header.add(but_right)
+
+        hbar.pack_start(box_header)
+
+        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
+        #  SPC chart
+        # canvas = self.generate_spc_plot(sheet, name_part, name_param)
+        trend = Trend()
+        canvas = trend.get_canvas(sheet, name_part, name_param)
+        canvas.set_size_request(1500, 500)
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        content = self.get_content_area()
-        content.add(box)
+        self.add(box)
+        box.pack_start(canvas, expand=True, fill=True, padding=0)
 
-        self.generate_spc_plot(box, sheet, name_part, name_param)
+        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
+        #  binding for clicking on arrow button
+        but_left.connect('clicked', self.on_arrow_left_clicked, row)
+        but_right.connect('clicked', self.on_arrow_right_clicked, row)
+
         self.show_all()
 
-    # -------------------------------------------------------------------------
-    #  generate_spc_plot
-    # -------------------------------------------------------------------------
-    def generate_spc_plot(self, box, sheet, name_part, param):
+    def on_arrow_left_clicked(self, widget, row):
+        row.dec()
+        self.on_arrow_clicked(row)
+
+    def on_arrow_right_clicked(self, widget, row):
+        row.inc()
+        self.on_arrow_clicked(row)
+
+    def on_arrow_clicked(self, row):
+        print(row.get())
+
+    # destructor
+    def __del__(self):
+        self.close()
+        self.destroy()
+
+
+class Trend():
+    def get_canvas(self, sheet, name_part, param):
         metrics = sheet.get_metrics(name_part, param)
         df = sheet.get_part(name_part)
         x = df['Sample']
@@ -93,6 +146,4 @@ class TrendChart(Gtk.Dialog):
         splot.text(x_label, y=metrics['Avg'], s=' Avg', color='green')
 
         canvas = FigureCanvas(fig)
-        canvas.set_size_request(1000, 400)
-
-        box.pack_start(canvas, expand=True, fill=True, padding=0)
+        return canvas
