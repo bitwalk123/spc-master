@@ -307,6 +307,7 @@ class SPCMaster(Gtk.Window):
             self.chart.destroy()
             del self.chart
 
+
         self.chart = pcs.ChartWin(self.info_master, widget, sheet)
 
 
