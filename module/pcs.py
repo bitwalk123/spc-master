@@ -73,10 +73,16 @@ class ChartWin(Gtk.Window):
         return name_param, name_part
 
     def on_arrow_left_clicked(self, widget, row, sheet):
+        if row.isMin():
+            return
+
         row.dec()
         self.update_chart(row, sheet)
 
     def on_arrow_right_clicked(self, widget, row, sheet):
+        if row.isMax():
+            return
+
         row.inc()
         self.update_chart(row, sheet)
 

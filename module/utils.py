@@ -80,5 +80,17 @@ class register():
         if self.value < self.value_min:
             self.value = self.value_min
 
+    def isMin(self):
+        if self.value == self.value_min:
+            return True
+        else:
+            return False
+
+    def isMax(self):
+        if self.value == self.value_max:
+            return True
+        else:
+            return False
+
 # ---
 # PROGRAM END
