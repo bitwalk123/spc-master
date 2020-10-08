@@ -25,7 +25,7 @@ class ChartWin(Gtk.Window):
         #  HeaderBar
         self.hbar = Gtk.HeaderBar()
         self.hbar.set_show_close_button(True)
-        self.set_hbar_title(name_param, name_part)
+        self.set_hbar_title(name_part, name_param)
 
         box_header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 
@@ -46,7 +46,7 @@ class ChartWin(Gtk.Window):
         # canvas = self.generate_spc_plot(sheet, name_part, name_param)
         self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(self.box)
-        self.gen_chart(name_param, name_part, sheet)
+        self.gen_chart(name_part, name_param, sheet)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  binding for clicking on arrow button
@@ -55,15 +55,46 @@ class ChartWin(Gtk.Window):
 
         self.show_all()
 
-    def set_hbar_title(self, name_param, name_part):
+    # -------------------------------------------------------------------------
+    #  set_hbar_title - set HeaderBar title to 'Part No' & 'Parameter Name'
+    #
+    #  argument
+    #    name_part  : PART Number
+    #    name_param : Parameter Name
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def set_hbar_title(self, name_part, name_param):
         self.hbar.props.title = name_part + " - " + name_param
         self.set_titlebar(self.hbar)
 
-    def gen_chart(self, name_param, name_part, sheet):
+    # -------------------------------------------------------------------------
+    #  gen_chart - generate chart
+    #
+    #  argument
+    #    name_part  : PART Number
+    #    name_param : Parameter Name
+    #    sheet      : data sheet from Excel file
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def gen_chart(self, name_part, name_param, sheet):
         canvas = make_trend_chart(sheet, name_part, name_param)
         canvas.set_size_request(1500, 500)
         self.box.pack_start(canvas, expand=True, fill=True, padding=0)
 
+    # -------------------------------------------------------------------------
+    #  get_part_param - get PART No & Parameter Name from sheet
+    #
+    #  argument
+    #    row   : row object on the Master Table
+    #    sheet : data sheet from Excel file
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
     def get_part_param(self, row, sheet):
         df_master = sheet.get_master()
         df_row = (df_master.iloc[row.get() - 1])
@@ -72,6 +103,18 @@ class ChartWin(Gtk.Window):
 
         return name_param, name_part
 
+    # -------------------------------------------------------------------------
+    #  on_arrow_left_clicked - event handling when left arrow botton on
+    #                          the HeaderBar is clicked.
+    #
+    #  argument
+    #    widget : clicked widget
+    #    row    : row object on the Master Table
+    #    sheet  : data sheet from Excel file
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
     def on_arrow_left_clicked(self, widget, row, sheet):
         if row.isMin():
             return
@@ -79,6 +122,18 @@ class ChartWin(Gtk.Window):
         row.dec()
         self.update_chart(row, sheet)
 
+    # -------------------------------------------------------------------------
+    #  on_arrow_right_clicked - event handling when lright arrow botton on
+    #                           the HeaderBar is clicked.
+    #
+    #  argument
+    #    widget : clicked widget
+    #    row    : row object on the Master Table
+    #    sheet  : data sheet from Excel file
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
     def on_arrow_right_clicked(self, widget, row, sheet):
         if row.isMax():
             return
@@ -86,21 +141,48 @@ class ChartWin(Gtk.Window):
         row.inc()
         self.update_chart(row, sheet)
 
+    # -------------------------------------------------------------------------
+    #  update_chart - update chart
+    #
+    #  argument
+    #    row    : row object on the Master Table
+    #    sheet  : data sheet from Excel file
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
     def update_chart(self, row, sheet):
+        # remove existence child widgets
         for child in self.box.get_children():
             self.box.remove(child)
             child.destroy()
-
+        # add new chart
         self.info_master.select_row(row.get())
         name_param, name_part = self.get_part_param(row, sheet)
-        self.set_hbar_title(name_param, name_part)
-        self.gen_chart(name_param, name_part, sheet)
+        self.set_hbar_title(name_part, name_param)
+        self.gen_chart(name_part, name_param, sheet)
         self.show_all()
 
+    # -------------------------------------------------------------------------
+    #  on_delete - event handling when close botton X on the window is clicked.
+    #
+    #  argument
+    #    widget : clicked widget
+    #    foo    : dummy
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
     def on_delete(self, widget, foo):
         self.__del__()
 
-    # destructor
+    # -------------------------------------------------------------------------
+    #  destructor
+    #
+    #  Note:
+    #  Usually, destructor is not reauired in Python programing but this is
+    #  prepared on purpose since special handling is required in this case.
+    # -------------------------------------------------------------------------
     def __del__(self):
         # print('DEBUG')
         self.info_master.deselect_row()
@@ -122,6 +204,7 @@ def make_trend_chart(sheet, name_part, name_param):
     fig = Figure(dpi=100)
     splot = fig.add_subplot(111, title=name_param, ylabel='Value')
     splot.grid(True)
+
     if metrics['Spec Type'] == 'Two-Sided':
         if not np.isnan(metrics['USL']):
             splot.axhline(y=metrics['USL'], linewidth=1, color='blue', label='USL')
@@ -138,10 +221,12 @@ def make_trend_chart(sheet, name_part, name_param):
             splot.axhline(y=metrics['USL'], linewidth=1, color='blue', label='USL')
         if not np.isnan(metrics['UCL']):
             splot.axhline(y=metrics['UCL'], linewidth=1, color='red', label='UCL')
+
     # Avg
     splot.axhline(y=metrics['Avg'], linewidth=1, color='green', label='Avg')
     # Line
     splot.plot(x, y, linewidth=1, color="gray")
+
     size_oos = 60
     size_ooc = 100
     if metrics['Spec Type'] == 'Two-Sided':
@@ -180,6 +265,7 @@ def make_trend_chart(sheet, name_part, name_param):
             splot.text(x_label, y=metrics['USL'], s=' USL', color='blue')
         if not np.isnan(metrics['UCL']):
             splot.text(x_label, y=metrics['UCL'], s=' UCL', color='red')
+
     # Avg
     splot.text(x_label, y=metrics['Avg'], s=' Avg', color='green')
 
