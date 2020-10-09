@@ -7,6 +7,9 @@ from gi.repository import Gtk, Gdk
 from module import excel, dlg, mbar, pcs, utils
 
 
+# =============================================================================
+#  SPCMaster - main class of this application
+# =============================================================================
 class SPCMaster(Gtk.Window):
     mainpanel = None
     info_master = None
@@ -346,9 +349,10 @@ class SPCMaster(Gtk.Window):
         self.show_all()
 
 
-# -----------------------------------------------------------------------------
+# =============================================================================
 #  MAIN
-# -----------------------------------------------------------------------------
+# =============================================================================
+# CSS handling
 provider = Gtk.CssProvider()
 provider.load_from_path('./spc-master.css')
 Gtk.StyleContext.add_provider_for_screen(
@@ -356,9 +360,12 @@ Gtk.StyleContext.add_provider_for_screen(
     provider,
     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
 )
+# main class
 win = SPCMaster()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
+
+# event loop
 Gtk.main()
 
 # ---

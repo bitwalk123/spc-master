@@ -1,7 +1,14 @@
 import numpy as np
+import pathlib
+import subprocess
+
 from gi.repository import Gtk
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
+
+from pptx import Presentation
+from pptx.util import Cm, Inches, Pt
+from pptx.dml.color import RGBColor
 
 from module import utils
 
@@ -19,6 +26,7 @@ class ChartWin(Gtk.Window):
         row = utils.register(int(widget.get_label()), 1, self.info_master.get_rows() - 1)
         self.info_master.select_row(row.get())
 
+        # get Parameter Name & PART Number
         name_param, name_part = self.get_part_param(row, sheet)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
@@ -68,12 +76,13 @@ class ChartWin(Gtk.Window):
         # canvas = self.generate_spc_plot(sheet, name_part, name_param)
         self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(self.box)
-        self.gen_chart(name_part, name_param, sheet)
+        self.gen_chart(sheet, name_part, name_param)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  binding for clicking on arrow button
         but_left.connect('clicked', self.on_arrow_left_clicked, row, sheet)
         but_right.connect('clicked', self.on_arrow_right_clicked, row, sheet)
+        but_ppt.connect('clicked', self.on_ppt_clicked, sheet, name_part, name_param)
 
         self.show_all()
 
@@ -102,8 +111,9 @@ class ChartWin(Gtk.Window):
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def gen_chart(self, name_part, name_param, sheet):
-        canvas = make_trend_chart(sheet, name_part, name_param)
+    def gen_chart(self, sheet, name_part, name_param):
+        figure = make_trend_chart(sheet, name_part, name_param)
+        canvas = FigureCanvas(figure)
         canvas.set_size_request(1500, 500)
         self.box.pack_start(canvas, expand=True, fill=True, padding=0)
 
@@ -185,6 +195,32 @@ class ChartWin(Gtk.Window):
         self.gen_chart(name_part, name_param, sheet)
         self.show_all()
 
+    def on_ppt_clicked(self, button, sheet, name_part, name_param):
+        image_path = "./chart.png"
+        template_path = "./template.pptx"
+        save_path = "./output.pptx"
+
+        # create chart
+        figure = make_trend_chart(sheet, name_part, name_param)
+
+        # create PNG file of plot
+        figure.savefig(image_path)
+
+        # create PowerPoint file
+        gen_ppt(image_path, template_path, save_path)
+
+        # open created file
+        open_file_with_app(save_path)
+
+        # complete messages
+        #dialog = Gtk.MessageDialog(parent=self,
+        #                           flags=0,
+        #                           message_type=Gtk.MessageType.INFO,
+        #                           buttons=Gtk.ButtonsType.OK,
+        #                           text="generated PowerPoint file in " + save_path + ".")
+        #dialog.run()
+        #dialog.destroy()
+
     # -------------------------------------------------------------------------
     #  on_delete - event handling when close botton X on the window is clicked.
     #
@@ -223,7 +259,7 @@ def make_trend_chart(sheet, name_part, name_param):
     df = sheet.get_part(name_part)
     x = df['Sample']
     y = df[name_param]
-    fig = Figure(dpi=100)
+    fig = Figure(dpi=100, figsize=(10, 3.5))
     splot = fig.add_subplot(111, title=name_param, ylabel='Value')
     splot.grid(True)
 
@@ -291,8 +327,46 @@ def make_trend_chart(sheet, name_part, name_param):
     # Avg
     splot.text(x_label, y=metrics['Avg'], s=' Avg', color='green')
 
-    canvas = FigureCanvas(fig)
-    return canvas
+    return fig
+
+
+def gen_ppt(image_path, template_path, save_path):
+    # insert empty slide
+    presentation = Presentation(template_path)
+    # refer layout from original master
+    title_slide_layout = presentation.slide_layouts[1]
+    slide = presentation.slides.add_slide(title_slide_layout)
+    shapes = slide.shapes
+    # slide title
+    slide_title = "SPC chart (Example)"
+    shapes.title.text = slide_title
+
+    # ---------------------------------------------------
+    # insert image
+    # ---------------------------------------------------
+    # insert position
+    pic_left = Inches(0)
+    pic_top = Inches(0.84)
+    # image height
+    pic_height = Inches(3.5)
+    slide.shapes.add_picture(image_path, pic_left, pic_top, height=pic_height)
+
+    # ---------------------------------------------------------------------
+    #  save PowerPoint file
+    # ---------------------------------------------------------------------
+    presentation.save(save_path)
+
+# -------------------------------------------------------------------------
+#  open_file_with_app
+#
+#  argument
+#    name_file :  file to open
+# -------------------------------------------------------------------------
+def open_file_with_app(name_file):
+    link_file = pathlib.PurePath(name_file)
+    # Explorer can cover all cases on Windows NT
+    subprocess.Popen(['explorer', link_file])
+
 
 # ---
 # PROGRAM END
