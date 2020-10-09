@@ -55,6 +55,7 @@ class info_page():
     def delChildren(self):
         for child in self.grid.get_children():
             self.grid.remove(child)
+            child.destroy()
 
 
 # =============================================================================
