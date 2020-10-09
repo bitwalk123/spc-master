@@ -304,6 +304,13 @@ class SPCMaster(Gtk.Window):
 
     # -------------------------------------------------------------------------
     #  on_param_clicked - create plot for specified parameter
+    #
+    #  argument
+    #    widget : clicked widget, automatically added from caller
+    #    sheet  : object of Excel sheet
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def on_param_clicked(self, widget, sheet):
         self.init_chart()
