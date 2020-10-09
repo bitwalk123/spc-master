@@ -27,19 +27,41 @@ class ChartWin(Gtk.Window):
         self.hbar.set_show_close_button(True)
         self.set_hbar_title(name_part, name_param)
 
-        box_header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
+        # Buttons at LEFT
+        box_left = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.hbar.pack_start(box_left)
 
         image_left = Gtk.Image.new_from_icon_name('go-previous', Gtk.IconSize.BUTTON)
         but_left = Gtk.Button()
         but_left.set_image(image_left)
-        box_header.add(but_left)
+        but_left.set_tooltip_text("go previous parameter")
+        box_left.add(but_left)
 
         image_right = Gtk.Image.new_from_icon_name('go-next', Gtk.IconSize.BUTTON)
         but_right = Gtk.Button()
         but_right.set_image(image_right)
-        box_header.add(but_right)
+        but_right.set_tooltip_text("go next parameter")
+        box_left.add(but_right)
 
-        self.hbar.pack_start(box_header)
+        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
+        # Buttons at RIGHT
+        box_right = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.hbar.pack_end(box_right)
+
+        # configulation plot for chart
+        image_ppt = Gtk.Image.new_from_icon_name('x-office-presentation', Gtk.IconSize.BUTTON)
+        but_ppt = Gtk.Button()
+        but_ppt.set_image(image_ppt)
+        but_ppt.set_tooltip_text("create PowerPoint file")
+        box_right.add(but_ppt)
+
+        # configulation plot for chart
+        image_conf = Gtk.Image.new_from_icon_name('applications-system', Gtk.IconSize.BUTTON)
+        but_conf = Gtk.Button()
+        but_conf.set_image(image_conf)
+        but_conf.set_tooltip_text("chart setting")
+        box_right.add(but_conf)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  SPC chart

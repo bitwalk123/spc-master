@@ -53,18 +53,22 @@ class main(MenuBar):
 
         # excel button
         self.but_excel = menubar_button(icon_name='x-office-spreadsheet')
+        self.but_excel.set_tooltip_text("open Excel file")
         box.pack_start(self.but_excel, expand=False, fill=True, padding=0)
 
         # powerpoint button
         self.but_ppt = menubar_button(icon_name='x-office-presentation')
+        self.but_ppt.set_tooltip_text("create PowerPoint file")
         box.pack_start(self.but_ppt, expand=False, fill=True, padding=0)
 
         # exit button
         self.but_exit = menubar_button(icon_name='application-exit')
+        self.but_exit.set_tooltip_text("exit application")
         box.pack_end(self.but_exit, expand=False, fill=True, padding=0)
 
         # info button
         self.but_info = menubar_button(icon_name='dialog-information')
+        self.but_info.set_tooltip_text("about this application")
         box.pack_end(self.but_info, expand=False, fill=True, padding=0)
 
     # -------------------------------------------------------------------------
