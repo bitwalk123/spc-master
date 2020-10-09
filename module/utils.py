@@ -46,6 +46,16 @@ class info_page():
                     child.get_style_context().remove_class("select")
                 child.get_style_context().add_class("sheet")
 
+    def hasChild(self):
+        if len(self.grid.get_children()) > 0:
+            return True
+        else:
+            return False
+
+    def delChildren(self):
+        for child in self.grid.get_children():
+            self.grid.remove(child)
+
 
 # =============================================================================
 #  register

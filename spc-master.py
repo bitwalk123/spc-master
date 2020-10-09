@@ -296,19 +296,47 @@ class SPCMaster(Gtk.Window):
     def on_file_clicked(self, widget):
         filename = dlg.file_chooser.get(parent=self, flag='excel')
         if filename is not None:
+            if self.info_master.hasChild():
+                self.init_app()
+
+            # read Excel file
             self.calc(filename)
+
+    # -------------------------------------------------------------------------
+    #  init_app -- initiqalize application to read new data
+    # -------------------------------------------------------------------------
+    def init_app(self):
+        # delete children of master grid
+        self.info_master.delChildren()
+
+        # initialize chart
+        self.init_chart()
+
+        # initialize mainpanel
+        for child in self.mainpanel.get_children():
+            name_page = self.mainpanel.get_tab_label_text(child)
+            if name_page != 'Master':
+                self.mainpanel.detach_tab(child)
+
+        # update GUI
+        self.show_all()
+
 
     # -------------------------------------------------------------------------
     #  on_param_clicked - create plot for specified parameter
     # -------------------------------------------------------------------------
     def on_param_clicked(self, widget, sheet):
+        self.init_chart()
+        self.chart = pcs.ChartWin(self.info_master, widget, sheet)
+
+    # -------------------------------------------------------------------------
+    #  init_chart -- initiqalize chart object (to display new data)
+    # -------------------------------------------------------------------------
+    def init_chart(self):
         if self.chart is not None:
             self.chart.close()
             self.chart.destroy()
-            del self.chart
-
-
-        self.chart = pcs.ChartWin(self.info_master, widget, sheet)
+            self.chart = None
 
 
 # -----------------------------------------------------------------------------
