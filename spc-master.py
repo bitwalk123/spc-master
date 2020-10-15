@@ -1,56 +1,43 @@
-import gi
+#!/usr/bin/env python
 import math
+import wx
+import wx.grid
 
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk
-
-from module import excel, dlg, mbar, pcs, utils
+from sheet import SpreadSheet
+from office import ExcelSPC
+from pcs import ChartWin
 
 
 # =============================================================================
-#  SPCMaster - main class of this application
+#  SPCMaster
 # =============================================================================
-class SPCMaster(Gtk.Window):
-    mainpanel = None
-    info_master = None
+class SPCMaster(wx.Frame):
+    notebook = None
+    statusbar = None
+    grid_master = None
+    sheets = None
     chart = None
+    num_param = 0
 
     def __init__(self):
-        Gtk.Window.__init__(self, title="SPC Master")
-        self.set_icon_from_file("./img/logo.png")
-        self.set_default_size(800, 600)
+        super(SPCMaster, self).__init__(parent=None, id=wx.ID_ANY)
+        self.Bind(wx.EVT_CLOSE, self.OnCloseFrame)
+        self.SetTitle('SPC Master')
+        self.SetSize(800, 600)
+        self.SetIcon(wx.Icon('images/logo.ico', wx.BITMAP_TYPE_ICO))
 
-        # container
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.add(box)
+        toolbar = self.CreateToolBar()
+        self.statusbar = self.CreateStatusBar()
 
-        ### menubar
-        self.menubar = mbar.main()
-        box.pack_start(self.menubar, expand=False, fill=True, padding=0)
-
-        # folder button clicked event
-        (self.menubar.get_obj('excel')).connect('clicked', self.on_file_clicked)
-
-        # exit button clicked event
-        (self.menubar.get_obj('exit')).connect('clicked', self.on_click_app_exit)
-
-        # main pabel
-        self.mainpanel = Gtk.Notebook()
-        self.mainpanel.set_tab_pos(Gtk.PositionType.BOTTOM)
-        box.pack_start(self.mainpanel, expand=True, fill=True, padding=0)
-
-        # master tab
-        grid_master = Gtk.Grid()
-        page_master = Gtk.ScrolledWindow()
-        page_master.add(grid_master)
-        page_master.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC
+        tool_excel = toolbar.AddTool(
+            toolId=wx.ID_ANY,
+            label='Excel',
+            bitmap=wx.Bitmap('images/excel.png')
         )
-        self.mainpanel.append_page(page_master, Gtk.Label(label="Master"))
+        self.Bind(wx.EVT_TOOL, self.OnOpen, tool_excel)
+        toolbar.Realize()
 
-        # create instance to store master page information
-        self.info_master = utils.info_page(grid_master)
+        self.notebook = wx.Notebook(self, wx.ID_ANY, style=wx.NB_BOTTOM)
 
     # -------------------------------------------------------------------------
     #  calc
@@ -63,51 +50,38 @@ class SPCMaster(Gtk.Window):
     #    (none)
     # -------------------------------------------------------------------------
     def calc(self, filename):
-        sheets = excel.ExcelSPC(filename)
+        self.sheets = ExcelSPC(filename)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         # check if read format is appropriate ot not
-        if sheets.valid is not True:
-            title = 'Error'
-            text = 'Not appropriate format!'
-            dialog = dlg.ok(self, title, text, 'dialog-error')
-            dialog.run()
-            dialog.destroy()
+        if self.sheets.valid is not True:
+            self.statusbar.SetStatusText('Not appropriate format!')
 
             # delete instance
-            del sheets
+            self.sheets = None
             return
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         # create tabs for tables & charts
-        # sheets.create_tabs(self.mainpanel)
-        self.create_tabs(sheets)
-
-        # update GUI
-        self.show_all()
+        self.create_tabs()
 
     # -------------------------------------------------------------------------
-    #  create_panel_part
-    #  creating 'Master' page
-    #
-    #  argument
-    #    (none)
-    #
-    #  return
-    #    instance of container
+    #  delete_current
     # -------------------------------------------------------------------------
-    def create_page_part(self, tabname):
-        # DATA tab
-        grid_data = Gtk.Grid()
-        scrwin_data = Gtk.ScrolledWindow()
-        scrwin_data.add(grid_data)
-        scrwin_data.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC
-        )
-        self.mainpanel.append_page(scrwin_data, Gtk.Label(label=tabname))
+    def delete_current(self):
+        # Notebook contents
+        n = self.notebook.GetPageCount()
+        for i in range(n):
+            self.notebook.DeletePage(0)
+            self.notebook.SendSizeEvent()
 
-        return grid_data
+        # Chart check
+        if self.chart is not None:
+            self.chart.Destroy()
+            self.chart = None
+
+        # update
+        self.Update()
 
     # -------------------------------------------------------------------------
     #  create_tabs
@@ -119,254 +93,188 @@ class SPCMaster(Gtk.Window):
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def create_tabs(self, sheet):
+    def create_tabs(self):
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  'Master' tab
-
-        # create 'Master' tab
-        self.create_tab_master(sheet)
+        self.create_tab_master()
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-        #  PART tab
-
-        # obtain unique part list
-        list_part = sheet.get_unique_part_list()
-
-        # create tab for etch part
+        #  PART tab(s)
+        list_part = self.sheets.get_unique_part_list()
         for name_part in list_part:
-            # create initial tab for part
-            grid_part_data = self.create_page_part(name_part)
-
-            # get dataframe of part data
-            df_part = sheet.get_part(name_part)
-
-            # create tab to show part data
-            self.create_tab_part_data(grid_part_data, df_part)
+            self.create_tab_part(name_part)
 
     # -------------------------------------------------------------------------
     #  create_tab_master
     #  creating 'Master' tab
     #
     #  argument
-    #    sheet   : object of Excel sheet
+    #    sheet : object of Excel sheet
     #
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def create_tab_master(self, sheet):
-        grid = self.info_master.grid
-        df = sheet.get_master()
+    def create_tab_master(self):
+        df = self.sheets.get_master()
+        r = len(df)
+        c = len(df.columns)
+        panel_master = SpreadSheet(self.notebook, row=r, col=c)
+        self.notebook.InsertPage(0, panel_master, 'Master')
 
+        self.grid_master = panel_master.get_grid()
+        # double click event definition for opening plot window
+        self.grid_master.Bind(
+            wx.grid.EVT_GRID_LABEL_LEFT_DCLICK,
+            self.OnHeaderDblClicked
+        )
+        self.num_param = self.gen_table(df, self.grid_master)
+
+        panel_master.update()
+
+    # -------------------------------------------------------------------------
+    #  create_tab_part - creating 'Master' tab
+    #
+    #  argument
+    #    sheet     : object of Excel sheet
+    #    name_part : part name
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def create_tab_part(self, name_part):
+        df = self.sheets.get_part(name_part)
+        r = len(df)
+        c = len(df.columns)
+        panel_part = SpreadSheet(self.notebook, row=r, col=c)
+        n = self.notebook.GetPageCount()
+        self.notebook.InsertPage(n, panel_part, name_part)
+
+        grid = panel_part.get_grid()
+        self.gen_table(df, grid)
+        panel_part.update()
+
+    # -------------------------------------------------------------------------
+    #  gen_table
+    # -------------------------------------------------------------------------
+    def gen_table(self, df, grid):
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  table header
-
-        x = 0;  # column
-        y = 0;  # row
-
-        # first column
-        widget = Gtk.Label(name='LabelHead', label='#')
-        widget.set_hexpand(True)
-        widget.get_style_context().add_class("header")
-        grid.attach(widget, x, y, 1, 1)
-        x += 1
-
-        # rest of columns
+        x = 0
         for item in df.columns.values:
-            widget = Gtk.Label(name='LabelHead', label=item)
-            widget.set_hexpand(True)
-            widget.get_style_context().add_class("header")
-            grid.attach(widget, x, y, 1, 1)
+            grid.SetColLabelValue(x, str(item))
             x += 1
-
-        y += 1
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  table contents
+        y = 0
         for row in df.itertuples(name=None):
             x = 0
             for item in list(row):
-                if (type(item) is float) or (type(item) is int):
-                    # the first column '#' starts from 0,
-                    # change to start from 1
-                    if x == 0:
-                        item += 1
-
-                    # right align on the widget
-                    xpos = 1.0
-                    if math.isnan(item):
-                        item = ''
-                else:
-                    # left align on the widget
-                    xpos = 0.0
-
-                item = str(item)
-
                 if x == 0:
-                    widget = Gtk.Button(label=item)
-                    widget.connect('clicked', self.on_param_clicked, sheet)
-                else:
-                    widget = Gtk.Label(name='Label', label=item, xalign=xpos)
-                    widget.set_hexpand(True)
+                    x += 1
+                    continue
 
-                widget.get_style_context().add_class("sheet")
-                grid.attach(widget, x, y, 1, 1)
-
-                x += 1
-
-            y += 1
-
-    # -------------------------------------------------------------------------
-    #  create_tab_part_data
-    #  creating DATA tab in (Part Number) tab
-    #
-    #  argument
-    #    grid : grid container where creating table
-    #    df   : dataframe for specified (Part Number)
-    #
-    #  return
-    #    (none)
-    # -------------------------------------------------------------------------
-    def create_tab_part_data(self, grid, df):
-        x = 0;  # column
-        y = 0;  # row
-
-        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-        #  table header
-
-        # first column
-        lab = Gtk.Label(name='LabelHead', label='#')
-        lab.set_hexpand(True)
-        lab.get_style_context().add_class("header");
-        grid.attach(lab, x, y, 1, 1)
-        x += 1
-
-        # rest of columns
-        for item in df.columns.values:
-            lab = Gtk.Label(name='LabelHead', label=item)
-            lab.set_hexpand(True)
-            lab.get_style_context().add_class("header");
-            grid.attach(lab, x, y, 1, 1)
-            x += 1
-
-        y += 1
-
-        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-        #  table contents
-        for row in df.itertuples(name=None):
-            x = 0
-            for item in list(row):
                 if (type(item) is float) or (type(item) is int):
                     # right align on the widget
-                    xpos = 1.0
+                    xalign = wx.ALIGN_RIGHT
                     if math.isnan(item):
                         item = ''
                 else:
                     # left align on the widget
-                    xpos = 0.0
+                    xalign = wx.ALIGN_LEFT
 
-                item = str(item)
+                grid.SetCellValue(y, x - 1, str(item))
+                grid.SetCellAlignment(y, x - 1, xalign, wx.ALIGN_CENTER)
 
-                lab = Gtk.Label(name='Label', label=item, xalign=xpos)
-                lab.set_hexpand(True)
-                # lab.set_alignment(xalign=xpos, yalign=0.5)
-                lab.get_style_context().add_class("sheet");
-                grid.attach(lab, x, y, 1, 1)
                 x += 1
 
             y += 1
 
+        return y
+
     # -------------------------------------------------------------------------
-    #  on_click_app_exit - Exit Application, emitting 'destroy' signal
+    #  setRowSelect
     #
     #  argument
-    #    widget : clicked widget, automatically added from caller
+    #    row : row to be selected
     #
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def on_click_app_exit(self, widget):
-        self.emit('destroy')
+    def setMasterRowSelect(self, row):
+        self.grid_master.SelectRow(row)
+        self.grid_master.MakeCellVisible(row, 0)
+        #self.grid_master.Scroll(0, row)
+
 
     # -------------------------------------------------------------------------
-    #  on_file_clicked - read Exel file
-    #
-    #  argument
-    #    widget : clicked widget, automatically added from caller
-    #
-    #  return
-    #    (none)
+    #  OnCloseFrame - Makes sure user was intending to quit the application
     # -------------------------------------------------------------------------
-    def on_file_clicked(self, widget):
-        filename = dlg.file_chooser.get(parent=self, flag='excel')
-        if filename is not None:
-            if self.info_master.hasChild():
-                self.init_app()
+    def OnCloseFrame(self, event):
+        dialog = wx.MessageDialog(
+            parent=self,
+            message='Are you sure you want to quit?',
+            caption='Warning',
+            pos=wx.DefaultPosition,
+            style=wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING
+        )
+        response = dialog.ShowModal()
 
-            # read Excel file
-            self.calc(filename)
-
-    # -------------------------------------------------------------------------
-    #  on_param_clicked - create plot for specified parameter
-    #
-    #  argument
-    #    widget : clicked widget, automatically added from caller
-    #    sheet  : object of Excel sheet
-    #
-    #  return
-    #    (none)
-    # -------------------------------------------------------------------------
-    def on_param_clicked(self, widget, sheet):
-        self.init_chart()
-        self.chart = pcs.ChartWin(self.info_master, widget, sheet)
+        if (response == wx.ID_YES):
+            self.OnExitApp(event)
+        else:
+            event.StopPropagation()
 
     # -------------------------------------------------------------------------
-    #  init_chart -- initiqalize chart object (to display new data)
+    #  OnExitApp - Destroys the main frame which quits the wxPython application
     # -------------------------------------------------------------------------
-    def init_chart(self):
+    def OnExitApp(self, event):
+        self.Destroy()
+
+    # -------------------------------------------------------------------------
+    #  OnHeaderDblClicked - double click event on row header of grid
+    # -------------------------------------------------------------------------
+    def OnHeaderDblClicked(self, event):
+        row = event.GetRow()
         if self.chart is not None:
-            self.chart.close()
-            self.chart.destroy()
-            self.chart = None
+            self.chart.Destroy()
+
+        self.chart = ChartWin(self, self.sheets, self.num_param, row)
 
     # -------------------------------------------------------------------------
-    #  init_app -- initiqalize application to read new data
+    #  OnOpen
     # -------------------------------------------------------------------------
-    def init_app(self):
-        # delete children of master grid
-        self.info_master.delChildren()
+    def OnOpen(self, event):
+        self.statusbar.SetStatusText('')
+        dialog = wx.FileDialog(
+            parent=self,
+            message='open Excel file',
+            defaultDir='',
+            defaultFile='',
+            wildcard='*.xlsm',
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+        )
+        if dialog.ShowModal() == wx.ID_CANCEL:
+            print('Cancel')
+            return
 
-        # initialize chart
-        self.init_chart()
+        self.delete_current()
+        filename = dialog.GetPath()
+        self.calc(filename)
 
-        # initialize mainpanel
-        for child in self.mainpanel.get_children():
-            name_page = self.mainpanel.get_tab_label_text(child)
-            if name_page != 'Master':
-                self.mainpanel.detach_tab(child)
-                child.destroy()
-
-        # update GUI
-        self.show_all()
+        # change size of window a bit to show scrollbars on purpose
+        size = self.GetSize()
+        self.SetSize(size[0] - 1, size[1] - 1)
+        self.SetSize(size[0], size[1])
 
 
 # =============================================================================
 #  MAIN
 # =============================================================================
-# CSS handling
-provider = Gtk.CssProvider()
-provider.load_from_path('./spc-master.css')
-Gtk.StyleContext.add_provider_for_screen(
-    Gdk.Screen.get_default(),
-    provider,
-    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-)
-# main class
-win = SPCMaster()
-win.connect("destroy", Gtk.main_quit)
-win.show_all()
-
-# event loop
-Gtk.main()
-
+if __name__ == '__main__':
+    app = wx.App()
+    win = SPCMaster()
+    win.Show()
+    app.MainLoop()
 # ---
-# PROGRAM END
+#  END OF PROGRAM
