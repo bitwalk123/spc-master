@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
+import math
+
 from pptx import Presentation
+from pptx.util import Inches
+from pptx.util import Pt
 
 
 class ExcelSPC():
@@ -54,19 +58,39 @@ class ExcelSPC():
     def get_metrics(self, name_part, param):
         df = self.get_master()
         df1 = df[(df['Part Number'] == name_part) & (df['Parameter Name'] == param)]
-        # print(df2)
+
         dict = {}
+        dict['Part Number'] = list(df1['Part Number'])[0]
+        dict['Description'] = list(df1['Description'])[0]
+        dict['Key Parameter'] = list(df1['Key Parameter'])[0]
+        dict['Parameter Name'] = list(df1['Parameter Name'])[0]
         dict['LSL'] = list(df1['LSL'])[0]
         dict['Target'] = list(df1['Target'])[0]
         dict['USL'] = list(df1['USL'])[0]
         dict['Chart Type'] = list(df1['Chart Type'])[0]
         dict['Metrology'] = list(df1['Metrology'])[0]
         dict['Multiple'] = list(df1['Multiple'])[0]
+        dict['Lower Tol'] = list(df1['Lower Tol'])[0]
+        dict['Upper Tol'] = list(df1['Upper Tol'])[0]
         dict['Spec Type'] = list(df1['Spec Type'])[0]
         dict['CL Frozen'] = list(df1['CL Frozen'])[0]
         dict['LCL'] = list(df1['LCL'])[0]
         dict['Avg'] = list(df1['Avg'])[0]
         dict['UCL'] = list(df1['UCL'])[0]
+        dict['RLCL'] = list(df1['RLCL'])[0]
+        dict['R Avg'] = list(df1['R Avg'])[0]
+        dict['RUCL'] = list(df1['RUCL'])[0]
+        dict['CLCR Lower'] = list(df1['CLCR Lower'])[0]
+        dict['CLCR Upper'] = list(df1['CLCR Upper'])[0]
+        dict['Total # of Recent Points'] = list(df1['Total # of Recent Points'])[0]
+        dict['%OOC for Recent Points'] = list(df1['%OOC for Recent Points'])[0]
+        dict['Cpk for Recent Points'] = list(df1['Cpk for Recent Points'])[0]
+        dict['PPM for Recent Points'] = list(df1['PPM for Recent Points'])[0]
+        dict['Recent Std Dev'] = list(df1['Recent Std Dev'])[0]
+        dict['Cpk for All Points'] = list(df1['Cpk for All Points'])[0]
+        dict['PPM for All Points'] = list(df1['PPM for All Points'])[0]
+        dict['Cpk for Historic & Recent Points'] = list(df1['Cpk for Historic & Recent Points'])[0]
+        dict['PPM for Historic & Recent Points'] = list(df1['PPM for Historic & Recent Points'])[0]
 
         return dict
 
@@ -167,6 +191,7 @@ class ExcelSPC():
         # read specified filename as Excel file including all tabs
         return pd.read_excel(filename, sheet_name=None)
 
+
 # =============================================================================
 #  PowerPoint class
 # =============================================================================
@@ -177,7 +202,10 @@ class PowerPoint():
         # insert empty slide
         self.ppt = Presentation(template)
 
-    def add_slide(self, info):
+    def add_slide(self, sheets, info):
+        metrics = sheets.get_metrics(info['PART'], info['PARAM'])
+        metrics = self.check_dict(metrics)
+
         # ---------------------------------------------------------------------
         #  refer layout from original master
         # ---------------------------------------------------------------------
@@ -194,8 +222,134 @@ class PowerPoint():
         # insert image
         # ---------------------------------------------------------------------
         slide.shapes.add_picture(
-            info['IMAGE'], left=info['left'], top=info['top'], height=info['height']
+            info['IMAGE'], left=info['ileft'], top=info['itop'], height=info['iheight']
         )
+
+        rows = 10
+        cols = 8
+        top = Inches(4.4)
+        left = Inches(0)
+        width = Inches(10)
+        height = Inches(0)
+
+        table = shapes.add_table(rows, cols, left, top, width, height).table
+
+        # set column widths
+        table.columns[0].width = Inches(1.0)
+        table.columns[1].width = Inches(3.5)
+        table.columns[2].width = Inches(0.9)
+        table.columns[3].width = Inches(0.7)
+        table.columns[4].width = Inches(0.8)
+        table.columns[5].width = Inches(0.7)
+        table.columns[6].width = Inches(1.7)
+        table.columns[7].width = Inches(0.7)
+
+        table.cell(0, 0).text = 'index'
+        table.cell(0, 1).text = 'value'
+        table.cell(0, 2).text = 'index'
+        table.cell(0, 3).text = 'value'
+        table.cell(0, 4).text = 'index'
+        table.cell(0, 5).text = 'value'
+        table.cell(0, 6).text = 'index'
+        table.cell(0, 7).text = 'value'
+
+        table.cell(1, 0).text = 'Part Number'
+        table.cell(2, 0).text = 'Description'
+        table.cell(3, 0).text = 'Parameter Name'
+        table.cell(4, 0).text = 'Key Parameter'
+        table.cell(5, 0).text = 'Metrology'
+
+        table.cell(1, 1).text = metrics['Part Number']
+        table.cell(2, 1).text = metrics['Description']
+        table.cell(3, 1).text = metrics['Parameter Name']
+        table.cell(4, 1).text = metrics['Key Parameter']
+        table.cell(5, 1).text = metrics['Metrology']
+
+        table.cell(1, 2).text = 'LSL'
+        table.cell(2, 2).text = 'Target'
+        table.cell(3, 2).text = 'USL'
+        table.cell(4, 2).text = 'Chart Type'
+        table.cell(5, 2).text = 'Multiple'
+        table.cell(6, 2).text = 'Spec Type'
+
+        table.cell(1, 3).text = metrics['LSL']
+        table.cell(2, 3).text = metrics['Target']
+        table.cell(3, 3).text = metrics['USL']
+        table.cell(4, 3).text = metrics['Chart Type']
+        table.cell(5, 3).text = metrics['Multiple']
+        table.cell(6, 3).text = metrics['Spec Type']
+
+        table.cell(1, 4).text = 'CL Frozen'
+        table.cell(2, 4).text = 'LCL'
+        table.cell(3, 4).text = 'Avg'
+        table.cell(4, 4).text = 'UCL'
+        table.cell(5, 4).text = 'RLCL'
+        table.cell(6, 4).text = 'R Avg'
+        table.cell(7, 4).text = 'RUCL'
+        table.cell(8, 4).text = 'CLCR Lower'
+        table.cell(9, 4).text = 'CLCR Upper'
+
+        table.cell(1, 5).text = metrics['CL Frozen']
+        table.cell(2, 5).text = metrics['LCL']
+        table.cell(3, 5).text = metrics['Avg']
+        table.cell(4, 5).text = metrics['UCL']
+        table.cell(5, 5).text = metrics['RLCL']
+        table.cell(6, 5).text = metrics['R Avg']
+        table.cell(7, 5).text = metrics['RUCL']
+        table.cell(8, 5).text = metrics['CLCR Lower']
+        table.cell(9, 5).text = metrics['CLCR Upper']
+
+        table.cell(1, 6).text = 'Total # of Recent Points'
+        table.cell(2, 6).text = '%OOC for Recent Points'
+        table.cell(3, 6).text = 'Cpk for Recent Points'
+        table.cell(4, 6).text = 'PPM for Recent Points'
+        table.cell(5, 6).text = 'Recent Std Dev'
+        table.cell(6, 6).text = 'Cpk for All Points'
+        table.cell(7, 6).text = 'PPM for All Points'
+        table.cell(8, 6).text = 'Cpk for Historic & Recent Points'
+        table.cell(9, 6).text = 'PPM for Historic & Recent Points'
+
+        table.cell(1, 7).text = metrics['Total # of Recent Points']
+        table.cell(2, 7).text = metrics['%OOC for Recent Points']
+        table.cell(3, 7).text = metrics['Cpk for Recent Points']
+        table.cell(4, 7).text = metrics['PPM for Recent Points']
+        table.cell(5, 7).text = metrics['Recent Std Dev']
+        table.cell(6, 7).text = metrics['Cpk for All Points']
+        table.cell(7, 7).text = metrics['PPM for All Points']
+        table.cell(8, 7).text = metrics['Cpk for Historic & Recent Points']
+        table.cell(9, 7).text = metrics['PPM for Historic & Recent Points']
+
+        for r in range(rows):
+            for c in range(cols):
+                font = table.cell(r, c).text_frame.paragraphs[0].font
+                font.size = Pt(7)
+
+    def check_dict(self, dict):
+        for key in dict:
+            value = dict[key]
+            if (type(value) is int):
+                if math.isnan(value):
+                    dict[key] = 'n/a'
+                else:
+                    dict[key] = str(value)
+
+                continue
+
+            if (type(value) is float):
+                if math.isnan(value):
+                    dict[key] = 'n/a'
+                else:
+                    if abs(value) < 10:
+                        dict[key] = '{:.6f}'.format(value)
+                    else:
+                        n = int(math.log10(abs(value)))
+                        if n < 6:
+                            f = '{:.' + str(6 - n) +'f}'
+                            dict[key] = f.format(value)
+                        else:
+                            dict[key] = str(int(value))
+
+        return dict
 
     # -------------------------------------------------------------------------
     #  save PowerPoint file

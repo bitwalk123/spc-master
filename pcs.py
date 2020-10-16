@@ -6,7 +6,6 @@ import wx
 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
-
 from pptx.util import Inches
 
 # =============================================================================
@@ -132,14 +131,6 @@ class ChartWin(wx.Frame):
     #    name_part  :
     #    name_param :
     # -------------------------------------------------------------------------
-    # def get_part_param(self):
-    #    df_master = self.sheets.get_master()
-    #    df_row = df_master.iloc[self.row]
-    #    name_part = df_row['Part Number']
-    #    name_param = df_row['Parameter Name']
-
-    #    return name_part, name_param
-
     def get_part_param(self, row):
         df_master = self.sheets.get_master()
         df_row = df_master.iloc[row]
@@ -182,9 +173,9 @@ class ChartWin(wx.Frame):
                 'PART': name_part,
                 'PARAM': name_param,
                 'IMAGE': image_path,
-                'left': Inches(0),
-                'top': Inches(0.84),
-                'height': Inches(3.5),
+                'ileft': Inches(0),
+                'itop': Inches(0.84),
+                'iheight': Inches(3.5),
             }
 
             # create chart
@@ -197,11 +188,11 @@ class ChartWin(wx.Frame):
                 template_path = save_path
 
             ppt_obj = PowerPoint(template_path)
-            ppt_obj.add_slide(info)
+            ppt_obj.add_slide(self.sheets, info)
             ppt_obj.save(save_path)
 
         # open created file
-        open_file_with_app(save_path)
+        self.open_file_with_app(save_path)
 
     # -------------------------------------------------------------------------
     #  OnAfter
@@ -226,13 +217,22 @@ class ChartWin(wx.Frame):
         self.create_chart()
 
     # -------------------------------------------------------------------------
+    #  open_file_with_app
+    #
+    #  argument
+    #    name_file :  file to open
+    # -------------------------------------------------------------------------
+    def open_file_with_app(self, name_file):
+        link_file = pathlib.PurePath(name_file)
+        # Explorer can cover all cases on Windows NT
+        subprocess.Popen(['explorer', link_file])
+
+    # -------------------------------------------------------------------------
     #  OnCloseFrame - Makes sure user was intending to quit the application
     # -------------------------------------------------------------------------
     def OnCloseFrame(self, event):
         self.parent.chart = None
         self.Destroy()
-
-
 
 
 # =============================================================================
@@ -241,12 +241,12 @@ class ChartWin(wx.Frame):
 # -----------------------------------------------------------------------------
 #  make_trend_chart
 # -----------------------------------------------------------------------------
-def make_trend_chart(sheet, info):
+def make_trend_chart(sheets, info):
     name_part = info['PART']
     name_param = info['PARAM']
 
-    metrics = sheet.get_metrics(name_part, name_param)
-    df = sheet.get_part(name_part)
+    metrics = sheets.get_metrics(name_part, name_param)
+    df = sheets.get_part(name_part)
     x = df['Sample']
     y = df[name_param]
     fig = Figure(dpi=100, figsize=(10, 3.5))
@@ -318,18 +318,6 @@ def make_trend_chart(sheet, info):
     splot.text(x_label, y=metrics['Avg'], s=' Avg', color='green')
 
     return fig
-
-
-# -------------------------------------------------------------------------
-#  open_file_with_app
-#
-#  argument
-#    name_file :  file to open
-# -------------------------------------------------------------------------
-def open_file_with_app(name_file):
-    link_file = pathlib.PurePath(name_file)
-    # Explorer can cover all cases on Windows NT
-    subprocess.Popen(['explorer', link_file])
 
 # ---
 # PROGRAM END

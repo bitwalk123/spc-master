@@ -204,8 +204,6 @@ class SPCMaster(wx.Frame):
     def setMasterRowSelect(self, row):
         self.grid_master.SelectRow(row)
         self.grid_master.MakeCellVisible(row, 0)
-        #self.grid_master.Scroll(0, row)
-
 
     # -------------------------------------------------------------------------
     #  OnCloseFrame - Makes sure user was intending to quit the application
@@ -255,7 +253,6 @@ class SPCMaster(wx.Frame):
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
         )
         if dialog.ShowModal() == wx.ID_CANCEL:
-            print('Cancel')
             return
 
         self.delete_current()
