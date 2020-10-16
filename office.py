@@ -336,20 +336,23 @@ class PowerPoint():
                 continue
 
             if (type(value) is float):
-                if math.isnan(value):
-                    dict[key] = 'n/a'
-                else:
-                    if abs(value) < 10:
-                        dict[key] = '{:.6f}'.format(value)
-                    else:
-                        n = int(math.log10(abs(value)))
-                        if n < 6:
-                            f = '{:.' + str(6 - n) +'f}'
-                            dict[key] = f.format(value)
-                        else:
-                            dict[key] = str(int(value))
+                self.floatFormat(dict, key, value)
 
         return dict
+
+    def floatFormat(self, dict, key, value):
+        if math.isnan(value):
+            dict[key] = 'n/a'
+        else:
+            if abs(value) < 10:
+                dict[key] = '{:.6f}'.format(value)
+            else:
+                n = int(math.log10(abs(value)))
+                if n < 6:
+                    f = '{:.' + str(6 - n) + 'f}'
+                    dict[key] = f.format(value)
+                else:
+                    dict[key] = str(int(value))
 
     # -------------------------------------------------------------------------
     #  save PowerPoint file
