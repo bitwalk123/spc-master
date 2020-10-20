@@ -47,7 +47,7 @@ class ChartWin(wx.Frame):
             bitmap=wx.Bitmap('images/after.png')
         )
         toolbar.AddSeparator()
-        self.tool_check = wx.CheckBox(toolbar, label='All slides')
+        self.tool_check = wx.CheckBox(toolbar, label='All parameters')
         toolbar.AddControl(self.tool_check)
         tool_ppt = toolbar.AddTool(
             toolId=wx.ID_ANY,
