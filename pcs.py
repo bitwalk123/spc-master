@@ -6,6 +6,8 @@ import wx
 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib import rcParams
+
 from pptx.util import Inches
 
 # =============================================================================
@@ -102,7 +104,8 @@ class ChartWin(wx.Frame):
             'PART': name_part,
             'PARAM': name_param,
         }
-        figure = make_trend_chart(self.sheets, info)
+        trend = Trend(self.sheets)
+        figure = trend.get(info)
         canvas = FigureCanvas(self, -1, figure)
         # canvas.set_size_request(1500, 500)
         return canvas
@@ -179,7 +182,8 @@ class ChartWin(wx.Frame):
             }
 
             # create chart
-            figure = make_trend_chart(self.sheets, info)
+            trend = Trend(self.sheets)
+            figure = trend.get(info)
             # create PNG file of plot
             figure.savefig(image_path)
 
@@ -236,88 +240,206 @@ class ChartWin(wx.Frame):
 
 
 # =============================================================================
-#  GLOBAL FUNCTIONS
+#  Trend class
 # =============================================================================
-# -----------------------------------------------------------------------------
-#  make_trend_chart
-# -----------------------------------------------------------------------------
-def make_trend_chart(sheets, info):
-    name_part = info['PART']
-    name_param = info['PARAM']
+class Trend():
+    sheets = None
+    splot = None
 
-    metrics = sheets.get_metrics(name_part, name_param)
-    df = sheets.get_part(name_part)
-    x = df['Sample']
-    y = df[name_param]
-    fig = Figure(dpi=100, figsize=(10, 3.5))
-    splot = fig.add_subplot(111, title=name_param, ylabel='Value')
-    splot.grid(True)
+    size_point = 10
+    size_oos = 30
+    size_ooc = 50
 
-    if metrics['Spec Type'] == 'Two-Sided':
+    x_left = 0
+    x_right = 0
+    unit = 0
+    nchar = 93
+
+    def __init__(self, sheets):
+        self.sheets = sheets
+
+    # -------------------------------------------------------------------------
+    #  get
+    # -------------------------------------------------------------------------
+    def get(self, info):
+        name_part = info['PART']
+        name_param = info['PARAM']
+
+        metrics = self.sheets.get_metrics(name_part, name_param)
+        df = self.sheets.get_part(name_part)
+        x = df['Sample']
+        y = df[name_param]
+
+        rcParams['font.family'] = 'monospace'
+        fig = Figure(dpi=100, figsize=(10, 3.5))
+        self.splot = fig.add_subplot(111, title=name_param, ylabel='Value')
+        self.splot.grid(True)
+
+        if metrics['Spec Type'] == 'Two-Sided':
+            self.axhline_two_sided(metrics)
+        elif metrics['Spec Type'] == 'One-Sided':
+            self.axhline_one_sided(metrics)
+
+        # Avg
+        self.splot.axhline(y=metrics['Avg'], linewidth=1, color='green', label='Avg')
+
+        # Line
+        self.splot.plot(x, y, linewidth=1, color="gray")
+
+        # Out Of Limits
+        if metrics['Spec Type'] == 'Two-Sided':
+            self.violation_two_sided(df, metrics, name_param, x, y)
+        elif metrics['Spec Type'] == 'One-Sided':
+            self.violation_one_sided(df, metrics, name_param, x, y)
+
+        # Histric data
+        dataType = 'Historic'
+        color_point = 'gray'
+        self.draw_points(color_point, dataType, df, x, y)
+        # Recent data
+        dataType = 'Recent'
+        color_point = 'black'
+        self.draw_points(color_point, dataType, df, x, y)
+
+        # plot dimension for labels
+        self.x_left = self.splot.get_xlim()[0]
+        self.x_right = self.splot.get_xlim()[1]
+        self.unit = self.get_unit(self.x_left, self.x_right)
+        # Label for Limits
+        if metrics['Spec Type'] == 'Two-Sided':
+            self.limits_label_two_sided(metrics)
+        elif metrics['Spec Type'] == 'One-Sided':
+            self.limits_label_one_sided(metrics)
+
+        #y = metrics['USL']
+        #label='123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123'
+        #self.splot.text(x=self.x_left, y=y, s=label, color='red')
+
+        return fig
+
+    # -------------------------------------------------------------------------
+    #  draw_points
+    # -------------------------------------------------------------------------
+    def draw_points(self, color, type, df, x, y):
+        x_historic = x[df['Data Type'] == type]
+        y_historic = y[df['Data Type'] == type]
+        self.splot.scatter(x_historic, y_historic, s=self.size_point, c=color, marker='o', label=type)
+
+    # -------------------------------------------------------------------------
+    #  axhline_one_sided
+    # -------------------------------------------------------------------------
+    def axhline_one_sided(self, metrics):
         if not np.isnan(metrics['USL']):
-            splot.axhline(y=metrics['USL'], linewidth=1, color='blue', label='USL')
+            self.splot.axhline(y=metrics['USL'], linewidth=1, color='blue', label='USL')
         if not np.isnan(metrics['UCL']):
-            splot.axhline(y=metrics['UCL'], linewidth=1, color='red', label='UCL')
+            self.splot.axhline(y=metrics['UCL'], linewidth=1, color='red', label='UCL')
+        if not np.isnan(metrics['RUCL']):
+            self.splot.axhline(y=metrics['RUCL'], linewidth=1, color='black', label='UCL')
+
+    # -------------------------------------------------------------------------
+    #  axhline_two_sided
+    # -------------------------------------------------------------------------
+    def axhline_two_sided(self, metrics):
+        self.axhline_one_sided(metrics)
         if not np.isnan(metrics['Target']):
-            splot.axhline(y=metrics['Target'], linewidth=1, color='purple', label='Target')
+            self.splot.axhline(y=metrics['Target'], linewidth=1, color='purple', label='Target')
+        if not np.isnan(metrics['RLCL']):
+            self.splot.axhline(y=metrics['RLCL'], linewidth=1, color='black', label='LCL')
         if not np.isnan(metrics['LCL']):
-            splot.axhline(y=metrics['LCL'], linewidth=1, color='red', label='LCL')
+            self.splot.axhline(y=metrics['LCL'], linewidth=1, color='red', label='LCL')
         if not np.isnan(metrics['LSL']):
-            splot.axhline(y=metrics['LSL'], linewidth=1, color='blue', label='LSL')
-    elif metrics['Spec Type'] == 'One-Sided':
-        if not np.isnan(metrics['USL']):
-            splot.axhline(y=metrics['USL'], linewidth=1, color='blue', label='USL')
-        if not np.isnan(metrics['UCL']):
-            splot.axhline(y=metrics['UCL'], linewidth=1, color='red', label='UCL')
+            self.splot.axhline(y=metrics['LSL'], linewidth=1, color='blue', label='LSL')
 
-    # Avg
-    splot.axhline(y=metrics['Avg'], linewidth=1, color='green', label='Avg')
-    # Line
-    splot.plot(x, y, linewidth=1, color="gray")
+    # -------------------------------------------------------------------------
+    #  violation_one_sided
+    # -------------------------------------------------------------------------
+    def violation_one_sided(self, df, metrics, name_param, x, y):
+        # OOC check
+        x_ooc = x[df[name_param] > metrics['UCL']]
+        y_ooc = y[df[name_param] > metrics['UCL']]
+        self.splot.scatter(x_ooc, y_ooc, s=self.size_ooc, c='orange', marker='o', label="Recent")
+        # OOS check
+        x_oos = x[df[name_param] > metrics['USL']]
+        y_oos = y[df[name_param] > metrics['USL']]
+        self.splot.scatter(x_oos, y_oos, s=self.size_oos, c='red', marker='o', label="Recent")
 
-    size_oos = 60
-    size_ooc = 100
-    if metrics['Spec Type'] == 'Two-Sided':
+    # -------------------------------------------------------------------------
+    #  violation_two_sided
+    # -------------------------------------------------------------------------
+    def violation_two_sided(self, df, metrics, name_param, x, y):
         # OOC check
         x_ooc = x[(df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])]
         y_ooc = y[(df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])]
-        splot.scatter(x_ooc, y_ooc, s=size_ooc, c='orange', marker='o', label="Recent")
+        self.splot.scatter(x_ooc, y_ooc, s=self.size_ooc, c='orange', marker='o', label="Recent")
         # OOS check
         x_oos = x[(df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])]
         y_oos = y[(df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])]
-        splot.scatter(x_oos, y_oos, s=size_oos, c='red', marker='o', label="Recent")
-    elif metrics['Spec Type'] == 'One-Sided':
-        # OOC check
-        x_ooc = x[(df[name_param] > metrics['UCL'])]
-        y_ooc = y[(df[name_param] > metrics['UCL'])]
-        splot.scatter(x_ooc, y_ooc, s=size_ooc, c='orange', marker='o', label="Recent")
-        # OOS check
-        x_oos = x[(df[name_param] > metrics['USL'])]
-        y_oos = y[(df[name_param] > metrics['USL'])]
-        splot.scatter(x_oos, y_oos, s=size_oos, c='red', marker='o', label="Recent")
-    splot.scatter(x, y, s=20, c='black', marker='o', label="Recent")
-    x_label = splot.get_xlim()[1]
-    if metrics['Spec Type'] == 'Two-Sided':
-        if not np.isnan(metrics['USL']):
-            splot.text(x_label, y=metrics['USL'], s=' USL', color='blue')
-        if not np.isnan(metrics['UCL']):
-            splot.text(x_label, y=metrics['UCL'], s=' UCL', color='red')
-        if not np.isnan(metrics['Target']):
-            splot.text(x_label, y=metrics['Target'], s=' Target', color='purple')
-        if not np.isnan(metrics['LCL']):
-            splot.text(x_label, y=metrics['LCL'], s=' LCL', color='red')
-        if not np.isnan(metrics['LSL']):
-            splot.text(x_label, y=metrics['LSL'], s=' LSL', color='blue')
-    elif metrics['Spec Type'] == 'One-Sided':
-        if not np.isnan(metrics['USL']):
-            splot.text(x_label, y=metrics['USL'], s=' USL', color='blue')
-        if not np.isnan(metrics['UCL']):
-            splot.text(x_label, y=metrics['UCL'], s=' UCL', color='red')
+        self.splot.scatter(x_oos, y_oos, s=self.size_oos, c='red', marker='o', label="Recent")
 
-    # Avg
-    splot.text(x_label, y=metrics['Avg'], s=' Avg', color='green')
+    def get_unit(self, x_left, x_right):
+        n = 87.5
+        d = (x_right - x_left) / n
+        return d
 
-    return fig
+    # -------------------------------------------------------------------------
+    #  limits_label_one_sided
+    # -------------------------------------------------------------------------
+    def limits_label_one_sided(self, metrics):
+        label = 'USL'
+        lcolor = 'blue'
+        self.put_label_right(label, lcolor, metrics)
+
+        label = 'UCL'
+        lcolor = 'red'
+        self.put_label_left(label, lcolor, metrics)
+
+        label = 'RUCL'
+        lcolor = 'black'
+        self.put_label_right(label, lcolor, metrics)
+
+        label = 'Avg'
+        lcolor = 'green'
+        self.put_label_right(label, lcolor, metrics)
+
+    # -------------------------------------------------------------------------
+    #  limits_label_two_sided
+    # -------------------------------------------------------------------------
+    def limits_label_two_sided(self, metrics):
+        self.limits_label_one_sided(metrics)
+
+        label = 'Target'
+        lcolor = 'purple'
+        self.put_label_left(label, lcolor, metrics)
+
+        label = 'RLCL'
+        lcolor = 'black'
+        self.put_label_right(label, lcolor, metrics)
+
+        label = 'LCL'
+        lcolor = 'red'
+        self.put_label_left(label, lcolor, metrics)
+
+        label = 'LSL'
+        lcolor = 'blue'
+        self.put_label_right(label, lcolor, metrics)
+
+    # -------------------------------------------------------------------------
+    #  put_label_right
+    # -------------------------------------------------------------------------
+    def put_label_right(self, label, lcolor, metrics):
+        if not np.isnan(metrics[label]):
+            x = self.x_right + self.unit / 2
+            y = metrics[label]
+            self.splot.text(x=x, y=y, s=label, color=lcolor)
+
+    # -------------------------------------------------------------------------
+    #  put_label_left
+    # -------------------------------------------------------------------------
+    def put_label_left(self, label, lcolor, metrics):
+        if not np.isnan(metrics[label]):
+            x = self.x_left - len(label) * self.unit
+            y = metrics[label]
+            self.splot.text(x=x, y=y, s=label, color=lcolor)
 
 # ---
 # PROGRAM END

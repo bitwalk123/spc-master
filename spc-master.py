@@ -7,11 +7,13 @@ from sheet import SpreadSheet
 from office import ExcelSPC
 from pcs import ChartWin
 
-
 # =============================================================================
 #  SPCMaster
 # =============================================================================
 class SPCMaster(wx.Frame):
+    app_name = 'SPC Master'
+    app_ver = '0.1'
+
     notebook = None
     statusbar = None
     grid_master = None
@@ -22,7 +24,7 @@ class SPCMaster(wx.Frame):
     def __init__(self):
         super(SPCMaster, self).__init__(parent=None, id=wx.ID_ANY)
         self.Bind(wx.EVT_CLOSE, self.OnCloseFrame)
-        self.SetTitle('SPC Master')
+        self.SetTitle(self.app_name + ' ' + self.app_ver)
         self.SetSize(800, 600)
         self.SetIcon(wx.Icon('images/logo.ico', wx.BITMAP_TYPE_ICO))
 
@@ -40,7 +42,7 @@ class SPCMaster(wx.Frame):
         self.notebook = wx.Notebook(self, wx.ID_ANY, style=wx.NB_BOTTOM)
 
     # -------------------------------------------------------------------------
-    #  calc
+    #  read_excel
     #  Aggregation from Excel for SPC
     #
     #  argument
@@ -49,7 +51,7 @@ class SPCMaster(wx.Frame):
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def calc(self, filename):
+    def read_excel(self, filename):
         self.sheets = ExcelSPC(filename)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
@@ -257,7 +259,7 @@ class SPCMaster(wx.Frame):
 
         self.delete_current()
         filename = dialog.GetPath()
-        self.calc(filename)
+        self.read_excel(filename)
 
         # change size of window a bit to show scrollbars on purpose
         size = self.GetSize()
