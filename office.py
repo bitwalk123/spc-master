@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import math
-
 from pptx import Presentation
 from pptx.util import Inches
 from pptx.util import Pt
