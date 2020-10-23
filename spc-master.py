@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import math
+import os.path
 import wx
 import wx.grid
-
-from sheet import SpreadSheet
 from office import ExcelSPC
 from pcs import ChartWin
+
 
 # =============================================================================
 #  SPCMaster
@@ -24,9 +24,9 @@ class SPCMaster(wx.Frame):
     def __init__(self):
         super(SPCMaster, self).__init__(parent=None, id=wx.ID_ANY)
         self.Bind(wx.EVT_CLOSE, self.OnCloseFrame)
-        self.SetTitle(self.app_name + ' ' + self.app_ver)
         self.SetSize(800, 600)
         self.SetIcon(wx.Icon('images/logo.ico', wx.BITMAP_TYPE_ICO))
+        self.set_app_title()
 
         toolbar = self.CreateToolBar()
         self.statusbar = self.CreateStatusBar()
@@ -40,6 +40,15 @@ class SPCMaster(wx.Frame):
         toolbar.Realize()
 
         self.notebook = wx.Notebook(self, wx.ID_ANY, style=wx.NB_BOTTOM)
+
+    # -------------------------------------------------------------------------
+    #  set_app_title
+    # -------------------------------------------------------------------------
+    def set_app_title(self, filename=None):
+        app_title = self.app_name + ' ' + self.app_ver
+        if filename is not None:
+            app_title = app_title + ' - ' + os.path.basename(filename)
+        self.SetTitle(app_title)
 
     # -------------------------------------------------------------------------
     #  read_excel
@@ -62,6 +71,9 @@ class SPCMaster(wx.Frame):
             # delete instance
             self.sheets = None
             return
+
+        # update application title
+        self.set_app_title(filename)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         # create tabs for tables & charts
@@ -265,6 +277,31 @@ class SPCMaster(wx.Frame):
         size = self.GetSize()
         self.SetSize(size[0] - 1, size[1] - 1)
         self.SetSize(size[0], size[1])
+
+
+# =============================================================================
+#  WorkSheet
+# =============================================================================
+class SpreadSheet(wx.Panel):
+    grid = None
+
+    def __init__(self, parent, row, col):
+        super(SpreadSheet, self).__init__(parent)
+
+        self.grid = wx.grid.Grid(self)
+        self.grid.CreateGrid(row, col)
+        self.grid.EnableEditing(False)
+        self.grid.AutoSize()
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.grid, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
+    def get_grid(self):
+        return (self.grid)
+
+    def update(self):
+        self.grid.AutoSize()
 
 
 # =============================================================================
