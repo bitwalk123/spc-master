@@ -1,21 +1,19 @@
 import numpy as np
 import pathlib
+import re
 import subprocess
 import tempfile
 import wx
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib import rcParams
-
 from pptx.util import Inches
+from office import PowerPoint
+
 
 # =============================================================================
 #  ChartWin class
 # =============================================================================
-from office import PowerPoint
-
-
 class ChartWin(wx.Frame):
     parent = None
     sheets = None
@@ -23,6 +21,7 @@ class ChartWin(wx.Frame):
     row = 0
 
     tool_check = None
+    canvas = None
 
     def __init__(self, parent, sheets, num_param, row):
         # super(ChartWin, self).__init__(parent=parent, id=wx.ID_ANY, style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
@@ -76,6 +75,8 @@ class ChartWin(wx.Frame):
         # get Parameter Name & PART Number
         name_part, name_param = self.get_part_param(self.row)
         self.UpdateTitle(name_part, name_param)
+        if self.canvas is not None:
+            del self.canvas
         self.canvas = self.gen_chart(name_part, name_param)
 
         # assign canvas on the widget
@@ -107,7 +108,6 @@ class ChartWin(wx.Frame):
         trend = Trend(self.sheets)
         figure = trend.get(info)
         canvas = FigureCanvas(self, -1, figure)
-        # canvas.set_size_request(1500, 500)
         return canvas
 
     # -------------------------------------------------------------------------
@@ -256,6 +256,9 @@ class Trend():
     TG = 'purple'
     AVG = 'green'
 
+    # pattern for Regular Expression
+    pattern = re.compile(r'.*\.(.*)')
+
     def __init__(self, sheets):
         self.sheets = sheets
 
@@ -272,10 +275,10 @@ class Trend():
         y = df[name_param]
 
         rcParams['font.family'] = 'monospace'
-
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
+
         self.ax = fig.add_subplot(111, title=name_param)
-        plt.subplots_adjust(left=0.2, right=0.8)
+        plt.subplots_adjust(left=0.17, right=0.83)
         self.ax.grid(True)
 
         if metrics['Spec Type'] == 'Two-Sided':
@@ -316,110 +319,20 @@ class Trend():
         self.draw_points(color_point, dataType, df, x, y)
 
         # ---------------------------------------------------------------------
-        # Label for HORIXONTAL LINE
+        # Label for HORIZONTAL LINE
         # ---------------------------------------------------------------------
-        list_labels_left = []
-        list_labels_right = []
-        if metrics['Spec Type'] == 'Two-Sided':
-            labels_left = ['LSL', 'LCL', 'Target', 'UCL', 'USL']
-            labels_right = ['RLCL', 'Avg', 'RUCL']
-        elif metrics['Spec Type'] == 'One-Sided':
-            labels_left = ['UCL', 'USL']
-            labels_right = ['Avg', 'RUCL']
-
-        for label in labels_left:
-            if not np.isnan(metrics[label]):
-                list_labels_left.append(label)
-
-        for label in labels_right:
-            if not np.isnan(metrics[label]):
-                list_labels_right.append(label)
-
-        # Left Axis: add extra ticks
-        extraticks = []
-        for label in list_labels_left:
-            extraticks.append(metrics[label])
-        self.ax.set_yticks(list(self.ax.get_yticks()) + extraticks)
-        fig.canvas.draw()
-
-        # Left Axis: extra labels
-        labels = [item.get_text() for item in self.ax.get_yticklabels()]
-        n = len(labels)
-        m = len(list_labels_left)
-        for i in range(m):
-            k = n - m + i
-            label_new = list_labels_left[i]
-            value = metrics[label_new]
-            labels[k] = label_new + ' = ' + self.make_value_str(value)
-        self.ax.set_yticklabels(labels)
-
-        # Left Axis: color
-        yticklabels = self.ax.get_yticklabels()
-        n = len(yticklabels)
-        m = len(list_labels_left)
-        for i in range(m):
-            k = n - m + i
-            label = list_labels_left[i]
-            if label == 'USL' or label == 'LSL':
-                color = self.SL
-            elif label == 'UCL' or label == 'LCL':
-                color = self.CL
-            elif label == 'Target':
-                color = self.TG
-            else:
-                color = 'black'
-
-            yticklabels[k].set_color(color)
-
-        # ---------------------------------------------------------------------
-        # add second y axis wish same range as first y axis
-        ax2 = self.ax.twinx()
-        ax2.set_ylim(self.ax.get_ylim())
-        ax2.tick_params(axis='y', colors='gray')
-
-        # Right Axis: add extra ticks
-        extraticks2 = []
-        for label in list_labels_right:
-            extraticks2.append(metrics[label])
-
-        ax2.set_yticks(list(ax2.get_yticks()) + extraticks2)
-        # fig.canvas.draw(); # no need to update
-
-        # Right Axis: labels
-        labels2 = [item.get_text() for item in ax2.get_yticklabels()]
-        n = len(labels2)
-        m = len(list_labels_right)
-        for i in range(m):
-            k = n - m + i
-            label_new = list_labels_right[i]
-            value = metrics[label_new]
-            labels2[k] = label_new + ' = ' + self.make_value_str(value)
-        ax2.set_yticklabels(labels2)
-
-        # Right Axis: color
-        yticklabels2 = ax2.get_yticklabels()
-        n = len(yticklabels2)
-        m = len(list_labels_right)
-        for i in range(m):
-            k = n - m + i
-            label = list_labels_right[i]
-            if label == 'RUCL' or label == 'RLCL':
-                color = self.RCL
-            elif label == 'Avg':
-                color = self.AVG
-            else:
-                color = 'black'
-
-            yticklabels2[k].set_color(color)
+        self.add_y_axis_labels(fig, metrics)
 
         return fig
 
-    # -------------------------------------------------------------------------
-    #  make_value_str
-    # -------------------------------------------------------------------------
-    def make_value_str(self, value):
-        value_str = '{:.6f}'.format(value)
-        return str(float(value_str))
+    def __del__(self):
+        del self.sheets
+        del self.ax
+        # Reference:
+        # https://stackoverflow.com/questions/21884271/warning-about-too-many-open-figures
+        plt.cla()
+        # plt.clf()
+        plt.close()
 
     # -------------------------------------------------------------------------
     #  draw_points
@@ -479,6 +392,139 @@ class Trend():
         x_oos = x[(df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])]
         y_oos = y[(df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])]
         self.ax.scatter(x_oos, y_oos, s=self.size_oos, c='red', marker='o', label="Recent")
+
+    # -------------------------------------------------------------------------
+    #  add_y_axis_labels
+    # -------------------------------------------------------------------------
+    def add_y_axis_labels(self, fig, metrics):
+        list_labels_left = []
+        list_labels_right = []
+        if metrics['Spec Type'] == 'Two-Sided':
+            labels_left = ['LSL', 'LCL', 'Target', 'UCL', 'USL']
+            labels_right = ['RLCL', 'Avg', 'RUCL']
+        elif metrics['Spec Type'] == 'One-Sided':
+            labels_left = ['UCL', 'USL']
+            labels_right = ['Avg', 'RUCL']
+        else:
+            labels_left = []
+            labels_right = ['Avg']
+
+        for label in labels_left:
+            if not np.isnan(metrics[label]):
+                list_labels_left.append(label)
+        for label in labels_right:
+            if not np.isnan(metrics[label]):
+                list_labels_right.append(label)
+
+        self.add_y_axis_labels_at_left(fig, list_labels_left, metrics)
+        self.add_y_axis_labels_at_right(fig, list_labels_right, metrics)
+
+    # -------------------------------------------------------------------------
+    #  add_y_axis_labels_at_left
+    # -------------------------------------------------------------------------
+    def add_y_axis_labels_at_left(self, fig, list_labels, metrics):
+        if len(list_labels) > 0:
+            # Left Axis: add extra ticks
+            self.add_extra_tick_values(self.ax, fig, list_labels, metrics)
+
+            # Left Axis: extra labels
+            labels = [item.get_text() for item in self.ax.get_yticklabels()]
+            nformat = self.get_tick_label_format(labels)
+            n = len(labels)
+            m = len(list_labels)
+            for i in range(m):
+                k = n - m + i
+                label_new = list_labels[i]
+                value = metrics[label_new]
+                labels[k] = label_new + ' = ' + nformat.format(value)
+            self.ax.set_yticklabels(labels)
+
+            # Left Axis: color
+            yticklabels = self.ax.get_yticklabels()
+            n = len(yticklabels)
+            m = len(list_labels)
+            for i in range(m):
+                k = n - m + i
+                label = list_labels[i]
+                if label == 'USL' or label == 'LSL':
+                    color = self.SL
+                elif label == 'UCL' or label == 'LCL':
+                    color = self.CL
+                elif label == 'Target':
+                    color = self.TG
+                else:
+                    color = 'black'
+
+                yticklabels[k].set_color(color)
+
+    # -------------------------------------------------------------------------
+    #  add_y_axis_labels_at_right
+    # -------------------------------------------------------------------------
+    def add_y_axis_labels_at_right(self, fig, list_labels, metrics):
+        if len(list_labels) > 0:
+            # -----------------------------------------------------------------
+            # add second y axis wish same range as first y axis
+            ax2 = self.ax.twinx()
+            ax2.set_ylim(self.ax.get_ylim())
+            ax2.tick_params(axis='y', colors='gray')
+
+            # Right Axis: add extra ticks
+            self.add_extra_tick_values(ax2, fig, list_labels, metrics)
+
+            # Right Axis: labels
+            labels = [item.get_text() for item in ax2.get_yticklabels()]
+            nformat = self.get_tick_label_format(labels)
+            n = len(labels)
+            m = len(list_labels)
+            for i in range(m):
+                k = n - m + i
+                label_new = list_labels[i]
+                value = metrics[label_new]
+                labels[k] = nformat.format(value) + ' = ' + label_new
+            ax2.set_yticklabels(labels)
+
+            # Right Axis: color
+            yticklabels = ax2.get_yticklabels()
+            n = len(yticklabels)
+            m = len(list_labels)
+            for i in range(m):
+                k = n - m + i
+                label = list_labels[i]
+                if label == 'RUCL' or label == 'RLCL':
+                    color = self.RCL
+                elif label == 'Avg':
+                    color = self.AVG
+                else:
+                    color = 'black'
+
+                yticklabels[k].set_color(color)
+
+    # -------------------------------------------------------------------------
+    #  add_extra_tick_values
+    # -------------------------------------------------------------------------
+    def add_extra_tick_values(self, ax, fig, list_labels, metrics):
+        extraticks = []
+        for label in list_labels:
+            extraticks.append(metrics[label])
+
+        ax.set_yticks(list(ax.get_yticks()) + extraticks)
+        # update drawing to reflect new ticks
+        fig.canvas.draw();
+
+    # -------------------------------------------------------------------------
+    #  get_tick_label_format
+    # -------------------------------------------------------------------------
+    def get_tick_label_format(self, labels):
+        digit = 0
+        for label in labels:
+            match = self.pattern.match(label)
+            if match:
+                n = len(match.group(1))
+                if n > digit:
+                    digit = n
+        nformat = '{:.' + str(n) + 'f}'
+
+        return nformat
 
 # ---
 # PROGRAM END
