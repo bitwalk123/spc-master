@@ -12,6 +12,17 @@ class ExcelSPC():
     valid = False
     SL_flag = []
 
+    header_master = ['Part Number', 'Description', 'Key Parameter', 'Parameter Name',
+                     'LSL', 'Target', 'USL', 'Chart Type', 'Metrology', 'Multiple',
+                     'Lower Tol', 'Upper Tol', 'Spec Type', 'CL Frozen',
+                     'LCL', 'Avg', 'UCL', 'RLCL', 'R Avg', 'RUCL', 'CLCR Lower', 'CLCR Upper',
+                     'Total # of Recent Points', '%OOC for Recent Points',
+                     'Cpk for Recent Points', 'PPM for Recent Points',
+                     'Parameter Classification', 'Product Classification',
+                     'Recent Std Dev', 'Cpk for All Points', 'PPM for All Points',
+                     'Cpk for Historic & Recent Points', 'PPM for Historic & Recent Points']
+
+
     # CONSTRUCTOR
     def __init__(self, filename):
         self.filename = filename
@@ -19,17 +30,21 @@ class ExcelSPC():
         self.valid = self.check_valid_sheet(self.sheets)
         self.init_SL_flag()
 
+
     def init_SL_flag(self):
         df = self.get_master()
         n = len(df)
         for i in range(n):
             self.SL_flag.append(False)
 
+
     def set_SL_flag(self, row, flag):
         self.SL_flag[row] = flag
 
+
     def get_SL_flag(self, row):
         return self.SL_flag[row]
+
 
     # -------------------------------------------------------------------------
     #  check_valid_sheet
@@ -48,6 +63,7 @@ class ExcelSPC():
         else:
             return False
 
+
     # -------------------------------------------------------------------------
     #  get_master
     #  get dataframe of 'Master' tab
@@ -62,8 +78,10 @@ class ExcelSPC():
         df = self.sheets['Master']
         # drop row if column 'Part Number' is NaN
         df = df.dropna(subset=['Part Number'])
+        df.columns = self.header_master
 
         return df
+
 
     # -------------------------------------------------------------------------
     #  get_metrics
@@ -107,6 +125,7 @@ class ExcelSPC():
 
         return dict
 
+
     # -------------------------------------------------------------------------
     #  get_param_list
     #  get list of 'Parameter Name' of specified 'Part Number'
@@ -121,6 +140,7 @@ class ExcelSPC():
         df = self.get_master()
 
         return list(df[df['Part Number'] == name_part]['Parameter Name'])
+
 
     # -------------------------------------------------------------------------
     #  get_part
@@ -161,6 +181,7 @@ class ExcelSPC():
 
         return df2
 
+
     # -------------------------------------------------------------------------
     #  get_sheets
     #  get dataframe containing Excel contents
@@ -173,6 +194,7 @@ class ExcelSPC():
     # -------------------------------------------------------------------------
     def get_sheets(self):
         return self.sheets
+
 
     # -------------------------------------------------------------------------
     #  get_unique_part_list
@@ -189,6 +211,7 @@ class ExcelSPC():
         list_part = list(np.unique(df['Part Number']))
 
         return list_part
+
 
     # -------------------------------------------------------------------------
     #  read
