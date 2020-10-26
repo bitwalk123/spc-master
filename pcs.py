@@ -15,17 +15,21 @@ from office import PowerPoint
 #  ChartWin class
 # =============================================================================
 class ChartWin(wx.Frame):
+    ID_KNOB = 100
+    ID_UPDATE = 101
+
     parent = None
     sheets = None
     num_param = 0
     row = 0
 
-    tool_check = None
+    check_all_slides = None
     canvas = None
 
+    width_spin = 80
+
     def __init__(self, parent, sheets, num_param, row):
-        # super(ChartWin, self).__init__(parent=parent, id=wx.ID_ANY, style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
-        super(ChartWin, self).__init__(parent=parent, id=wx.ID_ANY)
+        super().__init__(parent=parent, id=wx.ID_ANY)
 
         self.parent = parent
         self.sheets = sheets
@@ -37,36 +41,65 @@ class ChartWin(wx.Frame):
         # self.MakeModal(True)
 
         toolbar = self.CreateToolBar()
-        tool_before = toolbar.AddTool(
+        self.statusbar = self.CreateStatusBar()
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.SetSizer(self.sizer)
+
+        # ---------------------------------------------------------------------
+        # toolbar contents
+        # ---------------------------------------------------------------------
+        # previous parameter
+        but_param_before = toolbar.AddTool(
             toolId=wx.ID_ANY,
             label='previous',
             bitmap=wx.Bitmap('images/before.png')
         )
-        tool_after = toolbar.AddTool(
+        # post parameter
+        but_param_after = toolbar.AddTool(
             toolId=wx.ID_ANY,
             label='next',
             bitmap=wx.Bitmap('images/after.png')
         )
         toolbar.AddSeparator()
-        self.tool_check = wx.CheckBox(toolbar, label='All parameters')
-        toolbar.AddControl(self.tool_check)
-        tool_ppt = toolbar.AddTool(
+        self.check_update = wx.CheckBox(toolbar, label='No SL displayed')
+        self.check_update.SetValue(self.sheets.get_SL_flag(self.row))
+        toolbar.AddControl(self.check_update)
+        # button for updating chart
+        but_update = toolbar.AddTool(
+            toolId=wx.ID_ANY,
+            label='Update',
+            bitmap=wx.Bitmap('images/update.png')
+        )
+        toolbar.AddSeparator()
+        self.check_all_slides = wx.CheckBox(toolbar, label='All parameters')
+        toolbar.AddControl(self.check_all_slides)
+        # button for generating PowerPoint slide(s)
+        but_ppt = toolbar.AddTool(
             toolId=wx.ID_ANY,
             label='PowerPoint',
             bitmap=wx.Bitmap('images/powerpoint.png')
         )
-        self.Bind(wx.EVT_TOOL, self.OnBefore, tool_before)
-        self.Bind(wx.EVT_TOOL, self.OnAfter, tool_after)
-        self.Bind(wx.EVT_TOOL, self.OnPPT, tool_ppt)
-
         toolbar.Realize()
-        self.statusbar = self.CreateStatusBar()
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(self.sizer)
         self.create_chart()
+
         self.Fit()
         self.Show()
+
+        self.Bind(wx.EVT_TOOL, self.OnBefore, but_param_before)
+        self.Bind(wx.EVT_TOOL, self.OnAfter, but_param_after)
+        self.Bind(wx.EVT_TOOL, self.OnUpdate, but_update)
+        self.Bind(wx.EVT_TOOL, self.OnPPT, but_ppt)
+
+    def OnUpdate(self, event):
+        flag = self.WithoutSL()
+        flag_old = self.sheets.get_SL_flag(self.row)
+        if flag is not flag_old:
+            self.sheets.set_SL_flag(self.row, flag)
+            self.create_chart()
+
+    def WithoutSL(self):
+        return self.check_update.IsChecked()
 
     # -------------------------------------------------------------------------
     #  create_chart
@@ -75,18 +108,94 @@ class ChartWin(wx.Frame):
         # get Parameter Name & PART Number
         name_part, name_param = self.get_part_param(self.row)
         self.UpdateTitle(name_part, name_param)
+
+        # _/_/_/_/_/_/_/_/_/_/_/
+        # delete old children
+        size = self.sizer.GetSize()
+        self.sizer.Clear(delete_windows=True)
+
+        # Drawer
+        # self.drawer = wx.BoxSizer(wx.HORIZONTAL)
+        # self.sizer.Add(self.drawer, 0, wx.EXPAND, 0)
+
+        # Canvas for SPC Chart
         if self.canvas is not None:
             del self.canvas
         self.canvas = self.gen_chart(name_part, name_param)
-
-        # assign canvas on the widget
-        size = self.sizer.GetSize()
-        self.sizer.Clear(delete_windows=True)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
         self.sizer.SetDimension(0, 0, size[0], size[1])
 
+        # Left Drawer
+        # self.gen_drawer()
+        # self.Layout()
+        # self.Fit()
+
         # update row selection of 'Master' sheet
         self.parent.setMasterRowSelect(self.row)
+
+    # -------------------------------------------------------------------------
+    #  gen_drawer
+    # -------------------------------------------------------------------------
+    def gen_drawer(self):
+        # ---------------------------------------------------------------------
+        #  Left Drawer
+        # ---------------------------------------------------------------------
+        self.panel = wx.BoxSizer(wx.VERTICAL)
+        self.drawer.Add(self.panel, 0, wx.EXPAND, 0)
+        # Knob for Drawer
+        self.knob = wx.Button(self, self.ID_KNOB, '▒', size=(10, 0), name='Hide')
+        self.knob.SetBackgroundColour('#FFFFFF')
+        self.drawer.Add(self.knob, 0, wx.EXPAND, 0)
+        # ---------------------------------------------------------------------
+        #  Drawer Contents
+        # ---------------------------------------------------------------------
+        # axis high
+        self.spin_high = wx.SpinCtrlDouble(self, wx.ID_ANY, size=(self.width_spin, -1))
+        self.spin_high.SetDigits(3)
+        self.spin_high.SetValue(0.90)
+        self.spin_high.SetMin(0.50)
+        self.spin_high.SetMax(0.90)
+        self.spin_high.SetIncrement(0.01)
+        self.panel.Add(self.spin_high)
+        # padding (1)
+        pad1 = wx.Panel(self)
+        self.panel.Add(pad1, 1, wx.EXPAND)
+        # update button
+        self.but_update = wx.Button(self, self.ID_UPDATE, 'update', name='Update')
+        self.panel.Add(self.but_update, 0, wx.EXPAND)
+        # padding (2)
+        pad2 = wx.Panel(self)
+        self.panel.Add(pad2, 1, wx.EXPAND)
+        # axis low
+        self.spin_low = wx.SpinCtrlDouble(self, wx.ID_ANY, size=(self.width_spin, -1))
+        self.spin_low.SetDigits(3)
+        self.spin_low.SetValue(0.10)
+        self.spin_low.SetMin(0.10)
+        self.spin_low.SetMax(0.50)
+        self.spin_low.SetIncrement(0.01)
+        self.panel.Add(self.spin_low)
+        self.drawer.Hide(self.panel)
+
+        # ---------------------------------------------------------------------
+        #  Binding
+        # ---------------------------------------------------------------------
+        self.Bind(wx.EVT_BUTTON, self.click_knob)
+
+    # -------------------------------------------------------------------------
+    #  Event Handler for Knob/Drawer
+    # -------------------------------------------------------------------------
+    def click_knob(self, event):
+        if event.GetEventObject().GetId() == self.ID_KNOB:
+            if self.knob.GetName() == 'Hide':
+                self.drawer.Show(self.panel)
+                self.knob.SetName('Show')
+            elif self.knob.GetName() == 'Show':
+                self.drawer.Hide(self.panel)
+                self.knob.SetName('Hide')
+            else:
+                return
+
+            self.Layout()
 
     # -------------------------------------------------------------------------
     #  gen_chart - generate chart
@@ -105,7 +214,7 @@ class ChartWin(wx.Frame):
             'PART': name_part,
             'PARAM': name_param,
         }
-        trend = Trend(self.sheets)
+        trend = Trend(self.sheets, self.row)
         figure = trend.get(info)
         canvas = FigureCanvas(self, -1, figure)
         return canvas
@@ -160,7 +269,7 @@ class ChartWin(wx.Frame):
         save_path = tempfile.NamedTemporaryFile(suffix='.pptx').name
 
         # check box is checked?
-        if self.tool_check.GetValue():
+        if self.check_all_slides.GetValue():
             # loop fpr all parameters
             loop = range(self.num_param)
         else:
@@ -182,13 +291,13 @@ class ChartWin(wx.Frame):
             }
 
             # create chart
-            trend = Trend(self.sheets)
+            trend = Trend(self.sheets, row)
             figure = trend.get(info)
             # create PNG file of plot
             figure.savefig(image_path)
 
             # gen_ppt(template_path, image_path, save_path, info)
-            if self.tool_check.GetValue() and row > 0:
+            if self.check_all_slides.GetValue() and row > 0:
                 template_path = save_path
 
             ppt_obj = PowerPoint(template_path)
@@ -207,7 +316,7 @@ class ChartWin(wx.Frame):
             return
 
         self.row += 1
-        self.create_chart()
+        self.update_chart()
 
     # -------------------------------------------------------------------------
     #  OnBefore
@@ -218,6 +327,13 @@ class ChartWin(wx.Frame):
             return
 
         self.row -= 1
+        self.update_chart()
+
+    # -------------------------------------------------------------------------
+    #  update_chart
+    # -------------------------------------------------------------------------
+    def update_chart(self):
+        self.check_update.SetValue(self.sheets.get_SL_flag(self.row))
         self.create_chart()
 
     # -------------------------------------------------------------------------
@@ -244,6 +360,7 @@ class ChartWin(wx.Frame):
 # =============================================================================
 class Trend():
     sheets = None
+    row = 0
     ax = None
 
     size_point = 10
@@ -259,8 +376,9 @@ class Trend():
     # pattern for Regular Expression
     pattern = re.compile(r'.*\.(.*)')
 
-    def __init__(self, sheets):
+    def __init__(self, sheets, row):
         self.sheets = sheets
+        self.row = row
 
     # -------------------------------------------------------------------------
     #  get
@@ -322,16 +440,11 @@ class Trend():
         # Label for HORIZONTAL LINE
         # ---------------------------------------------------------------------
         self.add_y_axis_labels(fig, metrics)
+        # fig.canvas.draw();
 
         return fig
 
     def __del__(self):
-        del self.sheets
-        del self.ax
-        # Reference:
-        # https://stackoverflow.com/questions/21884271/warning-about-too-many-open-figures
-        plt.cla()
-        # plt.clf()
         plt.close()
 
     # -------------------------------------------------------------------------
@@ -346,8 +459,9 @@ class Trend():
     #  axhline_one_sided
     # -------------------------------------------------------------------------
     def axhline_one_sided(self, metrics):
-        if not np.isnan(metrics['USL']):
-            self.ax.axhline(y=metrics['USL'], linewidth=1, color=self.SL, label='USL')
+        if self.sheets.get_SL_flag(self.row) is False:
+            if not np.isnan(metrics['USL']):
+                self.ax.axhline(y=metrics['USL'], linewidth=1, color=self.SL, label='USL')
         if not np.isnan(metrics['UCL']):
             self.ax.axhline(y=metrics['UCL'], linewidth=1, color=self.CL, label='UCL')
         if not np.isnan(metrics['RUCL']):
@@ -364,8 +478,9 @@ class Trend():
             self.ax.axhline(y=metrics['RLCL'], linewidth=1, color=self.RCL, label='RLCL')
         if not np.isnan(metrics['LCL']):
             self.ax.axhline(y=metrics['LCL'], linewidth=1, color=self.CL, label='LCL')
-        if not np.isnan(metrics['LSL']):
-            self.ax.axhline(y=metrics['LSL'], linewidth=1, color=self.SL, label='LSL')
+        if self.sheets.get_SL_flag(self.row) is False:
+            if not np.isnan(metrics['LSL']):
+                self.ax.axhline(y=metrics['LSL'], linewidth=1, color=self.SL, label='LSL')
 
     # -------------------------------------------------------------------------
     #  violation_one_sided
@@ -400,10 +515,14 @@ class Trend():
         list_labels_left = []
         list_labels_right = []
         if metrics['Spec Type'] == 'Two-Sided':
-            labels_left = ['LSL', 'LCL', 'Target', 'UCL', 'USL']
+            labels_left = ['LCL', 'Target', 'UCL']
+            if self.sheets.get_SL_flag(self.row) is False:
+                labels_left.extend(['LSL', 'USL'])
             labels_right = ['RLCL', 'Avg', 'RUCL']
         elif metrics['Spec Type'] == 'One-Sided':
-            labels_left = ['UCL', 'USL']
+            labels_left = ['UCL']
+            if self.sheets.get_SL_flag(self.row) is False:
+                labels_left.extend(['USL'])
             labels_right = ['Avg', 'RUCL']
         else:
             labels_left = []
@@ -522,7 +641,7 @@ class Trend():
                 n = len(match.group(1))
                 if n > digit:
                     digit = n
-        nformat = '{:.' + str(n) + 'f}'
+        nformat = '{:.' + str(digit) + 'f}'
 
         return nformat
 

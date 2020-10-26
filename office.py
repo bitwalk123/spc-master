@@ -10,12 +10,26 @@ class ExcelSPC():
     filename = None
     sheets = None
     valid = False
+    SL_flag = []
 
     # CONSTRUCTOR
     def __init__(self, filename):
         self.filename = filename
         self.sheets = self.read(filename)
         self.valid = self.check_valid_sheet(self.sheets)
+        self.init_SL_flag()
+
+    def init_SL_flag(self):
+        df = self.get_master()
+        n = len(df)
+        for i in range(n):
+            self.SL_flag.append(False)
+
+    def set_SL_flag(self, row, flag):
+        self.SL_flag[row] = flag
+
+    def get_SL_flag(self, row):
+        return self.SL_flag[row]
 
     # -------------------------------------------------------------------------
     #  check_valid_sheet
