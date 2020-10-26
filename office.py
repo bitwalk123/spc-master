@@ -59,6 +59,7 @@ class ExcelSPC():
     def check_valid_sheet(self, sheets):
         # check if 'Master' tab exists
         if 'Master' in sheets.keys():
+            self.sheets['Master'].columns = self.header_master
             return True
         else:
             return False
@@ -78,7 +79,6 @@ class ExcelSPC():
         df = self.sheets['Master']
         # drop row if column 'Part Number' is NaN
         df = df.dropna(subset=['Part Number'])
-        df.columns = self.header_master
 
         return df
 
