@@ -373,8 +373,11 @@ class Trend():
     TG = 'purple'
     AVG = 'green'
 
-    # pattern for Regular Expression
-    pattern = re.compile(r'.*\.(.*)')
+    # Regular Expression
+    pattern1 = re.compile(r'.*_(Max|Min)')  # check whether parameter name includes Max/Min
+    pattern2 = re.compile(r'.*\.(.*)')  # extract right side from floating point in mumber
+
+    flag_no_CL = False
 
     def __init__(self, sheets, row):
         self.sheets = sheets
@@ -387,6 +390,13 @@ class Trend():
         name_part = info['PART']
         name_param = info['PARAM']
 
+        # check whether parameter name includes Max/Min
+        match = self.pattern1.match(name_param)
+        if match:
+            self.flag_no_CL = True
+        else:
+            self.flag_no_CL = False
+
         metrics = self.sheets.get_metrics(name_part, name_param)
         df = self.sheets.get_part(name_part)
         x = df['Sample']
@@ -397,7 +407,7 @@ class Trend():
 
         self.ax = fig.add_subplot(111, title=name_param)
         plt.subplots_adjust(left=0.17, right=0.83)
-        self.ax.grid(True)
+        self.ax.grid(False)
 
         if metrics['Spec Type'] == 'Two-Sided':
             self.axhline_two_sided(metrics)
@@ -410,7 +420,7 @@ class Trend():
 
         # _/_/_/_/_/_/_/
         # Line
-        self.ax.plot(x, y, linewidth=1, color="gray")
+        self.ax.plot(x, y, linewidth=1, color='gray')
 
         # Axis color
         self.ax.xaxis.label.set_color('gray')
@@ -462,10 +472,11 @@ class Trend():
         if self.sheets.get_SL_flag(self.row) is False:
             if not np.isnan(metrics['USL']):
                 self.ax.axhline(y=metrics['USL'], linewidth=1, color=self.SL, label='USL')
-        if not np.isnan(metrics['UCL']):
-            self.ax.axhline(y=metrics['UCL'], linewidth=1, color=self.CL, label='UCL')
-        if not np.isnan(metrics['RUCL']):
-            self.ax.axhline(y=metrics['RUCL'], linewidth=1, color=self.RCL, label='RUCL')
+        if self.flag_no_CL is False:
+            if not np.isnan(metrics['UCL']):
+                self.ax.axhline(y=metrics['UCL'], linewidth=1, color=self.CL, label='UCL')
+            if not np.isnan(metrics['RUCL']):
+                self.ax.axhline(y=metrics['RUCL'], linewidth=1, color=self.RCL, label='RUCL')
 
     # -------------------------------------------------------------------------
     #  axhline_two_sided
@@ -474,10 +485,11 @@ class Trend():
         self.axhline_one_sided(metrics)
         if not np.isnan(metrics['Target']):
             self.ax.axhline(y=metrics['Target'], linewidth=1, color=self.TG, label='Target')
-        if not np.isnan(metrics['RLCL']):
-            self.ax.axhline(y=metrics['RLCL'], linewidth=1, color=self.RCL, label='RLCL')
-        if not np.isnan(metrics['LCL']):
-            self.ax.axhline(y=metrics['LCL'], linewidth=1, color=self.CL, label='LCL')
+        if self.flag_no_CL is False:
+            if not np.isnan(metrics['RLCL']):
+                self.ax.axhline(y=metrics['RLCL'], linewidth=1, color=self.RCL, label='RLCL')
+            if not np.isnan(metrics['LCL']):
+                self.ax.axhline(y=metrics['LCL'], linewidth=1, color=self.CL, label='LCL')
         if self.sheets.get_SL_flag(self.row) is False:
             if not np.isnan(metrics['LSL']):
                 self.ax.axhline(y=metrics['LSL'], linewidth=1, color=self.SL, label='LSL')
@@ -515,19 +527,40 @@ class Trend():
         list_labels_left = []
         list_labels_right = []
         if metrics['Spec Type'] == 'Two-Sided':
-            labels_left = ['LCL', 'Target', 'UCL']
+            # LEFT
+            if self.flag_no_CL is False:
+                labels_left = ['LCL', 'Target', 'UCL']
+            else:
+                labels_left = ['Target']
+
             if self.sheets.get_SL_flag(self.row) is False:
                 labels_left.extend(['LSL', 'USL'])
-            labels_right = ['RLCL', 'Avg', 'RUCL']
+
+            # RIGHT
+            if self.flag_no_CL is False:
+                labels_right = ['RLCL', 'Avg', 'RUCL']
+            else:
+                labels_right = ['Avg']
         elif metrics['Spec Type'] == 'One-Sided':
-            labels_left = ['UCL']
+            # LEFT
+            if self.flag_no_CL is False:
+                labels_left = ['UCL']
+            else:
+                labels_left = []
+
             if self.sheets.get_SL_flag(self.row) is False:
                 labels_left.extend(['USL'])
-            labels_right = ['Avg', 'RUCL']
+
+            # RIGHT
+            if self.flag_no_CL is False:
+                labels_right = ['Avg', 'RUCL']
+            else:
+                labels_right = ['Avg']
         else:
             labels_left = []
             labels_right = ['Avg']
 
+        # Check whether defined label has number or not
         for label in labels_left:
             if not np.isnan(metrics[label]):
                 list_labels_left.append(label)
@@ -636,7 +669,7 @@ class Trend():
     def get_tick_label_format(self, labels):
         digit = 0
         for label in labels:
-            match = self.pattern.match(label)
+            match = self.pattern2.match(label)
             if match:
                 n = len(match.group(1))
                 if n > digit:
