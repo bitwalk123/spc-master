@@ -264,7 +264,7 @@ class ChartWin(wx.Frame):
     #  OnPPT
     # -------------------------------------------------------------------------
     def OnPPT(self, event):
-        template_path = "./template.pptx"
+        template_path = 'template/template.pptx'
         image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         save_path = tempfile.NamedTemporaryFile(suffix='.pptx').name
 
