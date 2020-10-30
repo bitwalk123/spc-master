@@ -7,7 +7,6 @@ import wx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib import rcParams
-from pptx.util import Inches
 from office import PowerPoint
 
 
@@ -61,15 +60,9 @@ class ChartWin(wx.Frame):
             bitmap=wx.Bitmap('images/after.png')
         )
         toolbar.AddSeparator()
-        self.check_update = wx.CheckBox(toolbar, label='No SL displayed')
+        self.check_update = wx.CheckBox(toolbar, label='Hide Spec Limit(s)')
         self.check_update.SetValue(self.sheets.get_SL_flag(self.row))
         toolbar.AddControl(self.check_update)
-        # button for updating chart
-        but_update = toolbar.AddTool(
-            toolId=wx.ID_ANY,
-            label='Update',
-            bitmap=wx.Bitmap('images/update.png')
-        )
         toolbar.AddSeparator()
         self.check_all_slides = wx.CheckBox(toolbar, label='All parameters')
         toolbar.AddControl(self.check_all_slides)
@@ -86,11 +79,15 @@ class ChartWin(wx.Frame):
         self.Fit()
         self.Show()
 
+        # EVENT HANDLING
         self.Bind(wx.EVT_TOOL, self.OnBefore, but_param_before)
         self.Bind(wx.EVT_TOOL, self.OnAfter, but_param_after)
-        self.Bind(wx.EVT_TOOL, self.OnUpdate, but_update)
+        self.Bind(wx.EVT_CHECKBOX, self.OnUpdate, self.check_update)
         self.Bind(wx.EVT_TOOL, self.OnPPT, but_ppt)
 
+    # -------------------------------------------------------------------------
+    #  OnUpdate
+    # -------------------------------------------------------------------------
     def OnUpdate(self, event):
         flag = self.WithoutSL()
         flag_old = self.sheets.get_SL_flag(self.row)
@@ -98,6 +95,9 @@ class ChartWin(wx.Frame):
             self.sheets.set_SL_flag(self.row, flag)
             self.create_chart()
 
+    # -------------------------------------------------------------------------
+    #  WithoutSL
+    # -------------------------------------------------------------------------
     def WithoutSL(self):
         return self.check_update.IsChecked()
 
@@ -285,14 +285,12 @@ class ChartWin(wx.Frame):
                 'PART': name_part,
                 'PARAM': name_param,
                 'IMAGE': image_path,
-                'ileft': Inches(0),
-                'itop': Inches(0.84),
-                'iheight': Inches(3.5),
             }
 
             # create chart
             trend = Trend(self.sheets, row)
             figure = trend.get(info)
+            info['Date of Last Lot Received'] = (trend.get_last_date()).strftime('%m/%d/%Y')
             # create PNG file of plot
             figure.savefig(image_path)
 
@@ -378,10 +376,14 @@ class Trend():
     pattern2 = re.compile(r'.*\.(.*)')  # extract right side from floating point in mumber
 
     flag_no_CL = False
+    date_last = None
 
     def __init__(self, sheets, row):
         self.sheets = sheets
         self.row = row
+
+    def __del__(self):
+        plt.close()
 
     # -------------------------------------------------------------------------
     #  get
@@ -401,6 +403,13 @@ class Trend():
         df = self.sheets.get_part(name_part)
         x = df['Sample']
         y = df[name_param]
+        date = df['Date']
+        # print(date[len(date)])
+
+        if len(date) == 0:
+            self.date_last = 'n/a'
+        else:
+            self.date_last = list(date)[len(date) - 1]
 
         rcParams['font.family'] = 'monospace'
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
@@ -454,8 +463,11 @@ class Trend():
 
         return fig
 
-    def __del__(self):
-        plt.close()
+    # -------------------------------------------------------------------------
+    #  get_last_date
+    # -------------------------------------------------------------------------
+    def get_last_date(self):
+        return self.date_last
 
     # -------------------------------------------------------------------------
     #  draw_points

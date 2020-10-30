@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import math
+import re
 from pptx import Presentation
 from pptx.util import Inches
 from pptx.util import Pt
@@ -22,29 +23,33 @@ class ExcelSPC():
                      'Recent Std Dev', 'Cpk for All Points', 'PPM for All Points',
                      'Cpk for Historic & Recent Points', 'PPM for Historic & Recent Points']
 
-
-    # CONSTRUCTOR
     def __init__(self, filename):
         self.filename = filename
         self.sheets = self.read(filename)
         self.valid = self.check_valid_sheet(self.sheets)
         self.init_SL_flag()
 
-
+    # -------------------------------------------------------------------------
+    #  init_SL_flag
+    # -------------------------------------------------------------------------
     def init_SL_flag(self):
+        self.SL_flag = []
         df = self.get_master()
         n = len(df)
         for i in range(n):
             self.SL_flag.append(False)
 
-
+    # -------------------------------------------------------------------------
+    #  set_SL_flag
+    # -------------------------------------------------------------------------
     def set_SL_flag(self, row, flag):
         self.SL_flag[row] = flag
 
-
+    # -------------------------------------------------------------------------
+    #  get_SL_flag
+    # -------------------------------------------------------------------------
     def get_SL_flag(self, row):
         return self.SL_flag[row]
-
 
     # -------------------------------------------------------------------------
     #  check_valid_sheet
@@ -64,7 +69,6 @@ class ExcelSPC():
         else:
             return False
 
-
     # -------------------------------------------------------------------------
     #  get_master
     #  get dataframe of 'Master' tab
@@ -81,7 +85,6 @@ class ExcelSPC():
         df = df.dropna(subset=['Part Number'])
 
         return df
-
 
     # -------------------------------------------------------------------------
     #  get_metrics
@@ -125,7 +128,6 @@ class ExcelSPC():
 
         return dict
 
-
     # -------------------------------------------------------------------------
     #  get_param_list
     #  get list of 'Parameter Name' of specified 'Part Number'
@@ -140,7 +142,6 @@ class ExcelSPC():
         df = self.get_master()
 
         return list(df[df['Part Number'] == name_part]['Parameter Name'])
-
 
     # -------------------------------------------------------------------------
     #  get_part
@@ -181,7 +182,6 @@ class ExcelSPC():
 
         return df2
 
-
     # -------------------------------------------------------------------------
     #  get_sheets
     #  get dataframe containing Excel contents
@@ -194,7 +194,6 @@ class ExcelSPC():
     # -------------------------------------------------------------------------
     def get_sheets(self):
         return self.sheets
-
 
     # -------------------------------------------------------------------------
     #  get_unique_part_list
@@ -211,7 +210,6 @@ class ExcelSPC():
         list_part = list(np.unique(df['Part Number']))
 
         return list_part
-
 
     # -------------------------------------------------------------------------
     #  read
@@ -238,6 +236,9 @@ class PowerPoint():
         # insert empty slide
         self.ppt = Presentation(template)
 
+    # -------------------------------------------------------------------------
+    #  add_slide
+    # -------------------------------------------------------------------------
     def add_slide(self, sheets, info):
         metrics = sheets.get_metrics(info['PART'], info['PARAM'])
         metrics = self.check_dict(metrics)
@@ -247,29 +248,89 @@ class PowerPoint():
         # ---------------------------------------------------------------------
         slide_layout = self.ppt.slide_layouts[1]
         slide = self.ppt.slides.add_slide(slide_layout)
+        shapes = slide.shapes
 
         # ---------------------------------------------------------------------
         #  slide title
         # ---------------------------------------------------------------------
-        shapes = slide.shapes
         shapes.title.text = info['PART']
+
+        # ---------------------------------------------------------------------
+        # insert textbox
+        # ---------------------------------------------------------------------
+        ##### DEBUG ROUINE for PLACEHOLDER INDEX #####
+        # for shape in slide.placeholders:
+        #    print('%d %s' % (shape.placeholder_format.idx, shape.name))
+
+        # Placeholder 1
+        ph1 = shapes.placeholders[1]
+        tf1 = ph1.text_frame
+        tf1.text = self.get_body_text_1(metrics)
+
+        # Placeholder 2
+        ph2 = shapes.placeholders[12]
+        tf2 = ph2.text_frame
+        if metrics['CL Frozen'] == 'Yes':
+            SL_status = 'Frozen'
+        else:
+            SL_status = 'Not frozen'
+
+        pattern = re.compile(r'(.*)\..*')  # left right side from floating point in mumber
+        num = metrics['Total # of Recent Points']
+        match = pattern.match(num)
+        if match:
+            num = match.group(1)
+
+        text = 'Control Limit Status:\t' + SL_status \
+               + '\nRecent Number of Data Points:\t' + num \
+               + '\nDate of Last Lot Received:\t' + info['Date of Last Lot Received']
+        tf2.text = text
 
         # ---------------------------------------------------------------------
         # insert image
         # ---------------------------------------------------------------------
-        slide.shapes.add_picture(
-            info['IMAGE'], left=info['ileft'], top=info['itop'], height=info['iheight']
-        )
+        ileft = Inches(0)
+        itop = Inches(1.92)
+        iheight = Inches(3.5)
 
+        slide.shapes.add_picture(info['IMAGE'], left=ileft, top=itop, height=iheight)
+
+        # ---------------------------------------------------------------------
+        # insert table
+        # ---------------------------------------------------------------------
+        # self.create_table(metrics, shapes)
+
+    # -------------------------------------------------------------------------
+    #  get_body_text_1
+    # -------------------------------------------------------------------------
+    def get_body_text_1(self, metrics):
+        if metrics['Chart Type'] == 'LJ':
+            dist = 'Normal'
+            ctype = 'Levey Jennings'
+        elif metrics['Chart Type'] == 'IR':
+            dist = 'Non-normal'
+            ctype = 'IR'
+        else:
+            dist = 'Unknown'
+            ctype = 'n/a'
+        text = 'Inspection Method:\t' + metrics['Metrology'] \
+               + '\tMeasurement Type:\t' + metrics['Metrology'] \
+               + '\nDistribution:\t' + dist \
+               + '\tParameter Type:\tKey' \
+               + '\nChart Type:\t' + ctype
+        return text
+
+    # -------------------------------------------------------------------------
+    #  create_table
+    # -------------------------------------------------------------------------
+    def create_table(self, metrics, shapes):
         rows = 10
         cols = 8
         top = Inches(4.4)
         left = Inches(0)
         width = Inches(10)
         height = Inches(0)
-
         table = shapes.add_table(rows, cols, left, top, width, height).table
-
         # set column widths
         table.columns[0].width = Inches(1.0)
         table.columns[1].width = Inches(3.5)
@@ -279,7 +340,6 @@ class PowerPoint():
         table.columns[5].width = Inches(0.7)
         table.columns[6].width = Inches(1.7)
         table.columns[7].width = Inches(0.7)
-
         table.cell(0, 0).text = 'index'
         table.cell(0, 1).text = 'value'
         table.cell(0, 2).text = 'index'
@@ -288,33 +348,28 @@ class PowerPoint():
         table.cell(0, 5).text = 'value'
         table.cell(0, 6).text = 'index'
         table.cell(0, 7).text = 'value'
-
         table.cell(1, 0).text = 'Part Number'
         table.cell(2, 0).text = 'Description'
         table.cell(3, 0).text = 'Parameter Name'
         table.cell(4, 0).text = 'Key Parameter'
         table.cell(5, 0).text = 'Metrology'
-
         table.cell(1, 1).text = metrics['Part Number']
         table.cell(2, 1).text = metrics['Description']
         table.cell(3, 1).text = metrics['Parameter Name']
         table.cell(4, 1).text = metrics['Key Parameter']
         table.cell(5, 1).text = metrics['Metrology']
-
         table.cell(1, 2).text = 'LSL'
         table.cell(2, 2).text = 'Target'
         table.cell(3, 2).text = 'USL'
         table.cell(4, 2).text = 'Chart Type'
         table.cell(5, 2).text = 'Multiple'
         table.cell(6, 2).text = 'Spec Type'
-
         table.cell(1, 3).text = metrics['LSL']
         table.cell(2, 3).text = metrics['Target']
         table.cell(3, 3).text = metrics['USL']
         table.cell(4, 3).text = metrics['Chart Type']
         table.cell(5, 3).text = metrics['Multiple']
         table.cell(6, 3).text = metrics['Spec Type']
-
         table.cell(1, 4).text = 'CL Frozen'
         table.cell(2, 4).text = 'LCL'
         table.cell(3, 4).text = 'Avg'
@@ -324,7 +379,6 @@ class PowerPoint():
         table.cell(7, 4).text = 'RUCL'
         table.cell(8, 4).text = 'CLCR Lower'
         table.cell(9, 4).text = 'CLCR Upper'
-
         table.cell(1, 5).text = metrics['CL Frozen']
         table.cell(2, 5).text = metrics['LCL']
         table.cell(3, 5).text = metrics['Avg']
@@ -334,7 +388,6 @@ class PowerPoint():
         table.cell(7, 5).text = metrics['RUCL']
         table.cell(8, 5).text = metrics['CLCR Lower']
         table.cell(9, 5).text = metrics['CLCR Upper']
-
         table.cell(1, 6).text = 'Total # of Recent Points'
         table.cell(2, 6).text = '%OOC for Recent Points'
         table.cell(3, 6).text = 'Cpk for Recent Points'
@@ -344,7 +397,6 @@ class PowerPoint():
         table.cell(7, 6).text = 'PPM for All Points'
         table.cell(8, 6).text = 'Cpk for Historic & Recent Points'
         table.cell(9, 6).text = 'PPM for Historic & Recent Points'
-
         table.cell(1, 7).text = metrics['Total # of Recent Points']
         table.cell(2, 7).text = metrics['%OOC for Recent Points']
         table.cell(3, 7).text = metrics['Cpk for Recent Points']
@@ -354,12 +406,14 @@ class PowerPoint():
         table.cell(7, 7).text = metrics['PPM for All Points']
         table.cell(8, 7).text = metrics['Cpk for Historic & Recent Points']
         table.cell(9, 7).text = metrics['PPM for Historic & Recent Points']
-
         for r in range(rows):
             for c in range(cols):
                 font = table.cell(r, c).text_frame.paragraphs[0].font
                 font.size = Pt(7)
 
+    # -------------------------------------------------------------------------
+    #  check_dict
+    # -------------------------------------------------------------------------
     def check_dict(self, dict):
         for key in dict:
             value = dict[key]
@@ -376,6 +430,9 @@ class PowerPoint():
 
         return dict
 
+    # -------------------------------------------------------------------------
+    #  floatFormat
+    # -------------------------------------------------------------------------
     def floatFormat(self, dict, key, value):
         if math.isnan(value):
             dict[key] = 'n/a'

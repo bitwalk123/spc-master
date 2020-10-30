@@ -61,6 +61,8 @@ class SPCMaster(wx.Frame):
     #    (none)
     # -------------------------------------------------------------------------
     def read_excel(self, filename):
+        if self.sheets is not None:
+            del self.sheets
         self.sheets = ExcelSPC(filename)
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
