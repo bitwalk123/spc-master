@@ -12,7 +12,7 @@ from pcs import ChartWin
 # =============================================================================
 class SPCMaster(wx.Frame):
     app_name = 'SPC Master'
-    app_ver = '0.1'
+    app_ver = '0.1 (alpha)'
 
     notebook = None
     statusbar = None

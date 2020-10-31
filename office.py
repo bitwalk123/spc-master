@@ -186,6 +186,7 @@ class ExcelSPC():
         # delete row including NaN
         df = df.dropna(how='all')
 
+
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  the first row od data sheet is used for 'Create Charts' button for
         #  the Excel macro
@@ -202,6 +203,9 @@ class ExcelSPC():
         # extract column name used for this dataframe
         list_colname = list(df.loc[0])
         df1.columns = list_colname
+
+        #for colname in ['Sample', 'Date', 'Job ID or Lot ID', 'Serial Number', 'Data Type']:
+        df1 = df1.dropna(subset=['Date'])
 
         # eliminate 'Hide' data
         df2 = df1[df1['Data Type'] != 'Hide']
@@ -296,21 +300,7 @@ class PowerPoint():
         # Placeholder 2
         ph2 = shapes.placeholders[21]
         tf2 = ph2.text_frame
-        if metrics['CL Frozen'] == 'Yes':
-            SL_status = 'Frozen'
-        else:
-            SL_status = 'Not frozen'
-
-        pattern = re.compile(r'(.*)\..*')  # left right side from floating point in mumber
-        num = metrics['Total # of Recent Points']
-        match = pattern.match(num)
-        if match:
-            num = match.group(1)
-
-        text = 'Control Limit Status:\t' + SL_status \
-               + '\nRecent Number of Data Points:\t' + num \
-               + '\nDate of Last Lot Received:\t' + info['Date of Last Lot Received']
-        tf2.text = text
+        tf2.text = self.get_body_text_2(info, metrics)
 
         # ---------------------------------------------------------------------
         # insert image
@@ -326,10 +316,12 @@ class PowerPoint():
         # ---------------------------------------------------------------------
         # self.create_table(metrics, shapes)
 
+
     # -------------------------------------------------------------------------
     #  get_body_text_1
     # -------------------------------------------------------------------------
     def get_body_text_1(self, metrics):
+        # Chart Type Information
         if metrics['Chart Type'] == 'LJ':
             dist = 'Normal'
             ctype = 'Levey Jennings'
@@ -339,12 +331,41 @@ class PowerPoint():
         else:
             dist = 'Unknown'
             ctype = 'n/a'
+        # Spec Information
+        if metrics['Spec Type'] == 'Two-Sided':
+            spec = '\tUSL = '+ metrics['USL'] + ', LSL = ' + metrics['LSL']
+        elif metrics['Spec Type'] == 'One-Sided':
+            spec = '\tUSL = ' + metrics['USL']
+        else:
+            spec = 'n/a'
+
         text = 'Inspection Method:\t' + metrics['Metrology'] \
                + '\tMeasurement Type:\t' + metrics['Multiple'] \
                + '\nDistribution:\t' + dist \
                + '\tParameter Type:\tKey' \
                + '\nChart Type:\t' + ctype\
-               + '\tUSL = '+ metrics['USL'] + ', LSL = ' + metrics['LSL']
+               + spec
+        return text
+
+    # -------------------------------------------------------------------------
+    #  get_body_text_2
+    # -------------------------------------------------------------------------
+    def get_body_text_2(self, info, metrics):
+        if metrics['CL Frozen'] == 'Yes':
+            SL_status = 'Frozen'
+        else:
+            SL_status = 'Not frozen'
+
+        pattern = re.compile(r'(.*)\..*')  # left right side from floating point in mumber
+        num = metrics['Total # of Recent Points']
+        match = pattern.match(num)
+        if match:
+            num = match.group(1)
+
+        text = 'Control Limit Status:\t' + SL_status \
+               + '\nRecent Number of Data Points:\t' + num \
+               + '\nDate of Last Lot Received:\t' + info['Date of Last Lot Received']
+
         return text
 
     # -------------------------------------------------------------------------

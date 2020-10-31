@@ -137,7 +137,7 @@ class ChartWin(wx.Frame):
         # self.sizer.Add(self.drawer, 0, wx.EXPAND, 0)
 
         # Canvas for SPC Chart
-        #if self.canvas is not None:
+        # if self.canvas is not None:
         #    del self.canvas
         self.canvas = self.gen_chart(name_part, name_param)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
@@ -247,8 +247,8 @@ class ChartWin(wx.Frame):
         trend = Trend(self.sheets, self.row)
         figure = trend.get(info)
         canvas = FigureCanvas(self, -1, figure)
-        #del trend
-        #print('DEBUG0')
+        # del trend
+        # print('DEBUG0')
 
         return canvas
 
@@ -312,6 +312,7 @@ class ChartWin(wx.Frame):
         for row in loop:
             # get Parameter Name & PART Number
             name_part, name_param = self.get_part_param(row)
+            #print(row + 1, name_part, name_param)
 
             # create PowerPoint file
             info = {
@@ -323,9 +324,13 @@ class ChartWin(wx.Frame):
             # create chart
             trend = Trend(self.sheets, row)
             figure = trend.get(info)
+
             dateObj = trend.get_last_date()
-            print(row, type(dateObj), dateObj)
-            info['Date of Last Lot Received'] = dateObj.strftime('%m/%d/%Y')
+            if type(dateObj) is str:
+                info['Date of Last Lot Received'] = dateObj
+            else:
+                info['Date of Last Lot Received'] = dateObj.strftime('%m/%d/%Y')
+
             # create PNG file of plot
             figure.savefig(image_path)
 
@@ -452,10 +457,11 @@ class Trend():
     date_last = None
 
     def __init__(self, sheets, row):
+        plt.close()
         self.sheets = sheets
         self.row = row
 
-    #def __del__(self):
+    # def __del__(self):
     #    plt.clf()
     #    plt.close()
     #    print('DEBUG!')
@@ -495,9 +501,9 @@ class Trend():
         rcParams['font.family'] = self.font_family
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
 
-        #if self.ax1 is not None:
+        # if self.ax1 is not None:
         #    self.ax1.clear()
-        #if self.ax2 is not None:
+        # if self.ax2 is not None:
         #    self.ax2.clear()
 
         # -----------------------------------------------------------------
@@ -522,7 +528,7 @@ class Trend():
         # _/_/_/_/_/_/_/
         # Line
         self.ax1.plot(x, y, linewidth=1, color='gray')
-        self.ax2.plot(x, y, linewidth=0, color='red') # for debug
+        self.ax2.plot(x, y, linewidth=0, color='red')  # for debug
 
         # Axis color
         self.ax1.xaxis.label.set_color('gray')
@@ -562,8 +568,8 @@ class Trend():
         self.add_y_axis_labels(fig, metrics)
         # fig.canvas.draw();
 
-        #print(self.ax1.get_ylim())
-        #print(self.ax2.get_ylim())
+        # print(self.ax1.get_ylim())
+        # print(self.ax2.get_ylim())
 
         return fig
 
@@ -829,7 +835,7 @@ class Trend():
     # -------------------------------------------------------------------------
     def add_y_axis_labels_at_right(self, fig, list_labels, metrics):
         if len(list_labels) > 0:
-            #fig.canvas.draw();
+            # fig.canvas.draw();
 
             # Right Axis: add extra ticks
             self.add_extra_tick_values(self.ax2, fig, list_labels, metrics)
@@ -845,7 +851,6 @@ class Trend():
                 value = metrics[label_new]
                 labels[k] = nformat.format(value) + ' = ' + label_new
             self.ax2.set_yticklabels(labels)
-
 
             # Right Axis: color
             yticklabels = self.ax2.get_yticklabels()
@@ -864,11 +869,9 @@ class Trend():
                 yticklabels[k].set_color(color)
 
             # set axis
-            #print(self.ax.get_ylim())
-            #self.ax2.set_ylim(self.ax.get_ylim())
-            #print(self.ax2.get_ylim())
-
-
+            # print(self.ax.get_ylim())
+            # self.ax2.set_ylim(self.ax.get_ylim())
+            # print(self.ax2.get_ylim())
 
     # -------------------------------------------------------------------------
     #  add_extra_tick_values
