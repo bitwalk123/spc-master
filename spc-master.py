@@ -82,7 +82,13 @@ class SPCMaster(wx.Frame):
         self.create_tabs()
 
     # -------------------------------------------------------------------------
-    #  delete_current
+    #  delete_current - delete current page (tab) of notebook
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def delete_current(self):
         # Notebook contents
@@ -171,6 +177,13 @@ class SPCMaster(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  gen_table
+    #
+    #  argument
+    #    df   :
+    #    grid :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def gen_table(self, df, grid):
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
@@ -223,6 +236,12 @@ class SPCMaster(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  OnCloseFrame - Makes sure user was intending to quit the application
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def OnCloseFrame(self, event):
         dialog = wx.MessageDialog(
@@ -241,12 +260,24 @@ class SPCMaster(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  OnExitApp - Destroys the main frame which quits the wxPython application
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def OnExitApp(self, event):
         self.Destroy()
 
     # -------------------------------------------------------------------------
     #  OnHeaderDblClicked - double click event on row header of grid
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def OnHeaderDblClicked(self, event):
         row = event.GetRow()
@@ -257,6 +288,12 @@ class SPCMaster(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  OnOpen
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def OnOpen(self, event):
         self.statusbar.SetStatusText('')
@@ -299,9 +336,27 @@ class SpreadSheet(wx.Panel):
         sizer.Add(self.grid, 1, wx.EXPAND)
         self.SetSizer(sizer)
 
+    # -------------------------------------------------------------------------
+    #  get_grid - return grid instance
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    grid instance
+    # -------------------------------------------------------------------------
     def get_grid(self):
         return (self.grid)
 
+    # -------------------------------------------------------------------------
+    #  update - update grid size
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
     def update(self):
         self.grid.AutoSize()
 

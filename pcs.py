@@ -87,6 +87,12 @@ class ChartWin(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  OnUpdate
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def OnUpdate(self, event):
         flag = self.WithoutSL()
@@ -97,12 +103,24 @@ class ChartWin(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  WithoutSL
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    CheckBox check_update status
     # -------------------------------------------------------------------------
     def WithoutSL(self):
         return self.check_update.IsChecked()
 
     # -------------------------------------------------------------------------
     #  create_chart
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def create_chart(self):
         # get Parameter Name & PART Number
@@ -119,8 +137,8 @@ class ChartWin(wx.Frame):
         # self.sizer.Add(self.drawer, 0, wx.EXPAND, 0)
 
         # Canvas for SPC Chart
-        if self.canvas is not None:
-            del self.canvas
+        #if self.canvas is not None:
+        #    del self.canvas
         self.canvas = self.gen_chart(name_part, name_param)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
         self.sizer.SetDimension(0, 0, size[0], size[1])
@@ -135,6 +153,12 @@ class ChartWin(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  gen_drawer
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def gen_drawer(self):
         # ---------------------------------------------------------------------
@@ -183,6 +207,12 @@ class ChartWin(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  Event Handler for Knob/Drawer
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def click_knob(self, event):
         if event.GetEventObject().GetId() == self.ID_KNOB:
@@ -217,6 +247,9 @@ class ChartWin(wx.Frame):
         trend = Trend(self.sheets, self.row)
         figure = trend.get(info)
         canvas = FigureCanvas(self, -1, figure)
+        #del trend
+        #print('DEBUG0')
+
         return canvas
 
     # -------------------------------------------------------------------------
@@ -290,7 +323,9 @@ class ChartWin(wx.Frame):
             # create chart
             trend = Trend(self.sheets, row)
             figure = trend.get(info)
-            info['Date of Last Lot Received'] = (trend.get_last_date()).strftime('%m/%d/%Y')
+            dateObj = trend.get_last_date()
+            print(row, type(dateObj), dateObj)
+            info['Date of Last Lot Received'] = dateObj.strftime('%m/%d/%Y')
             # create PNG file of plot
             figure.savefig(image_path)
 
@@ -307,6 +342,12 @@ class ChartWin(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  OnAfter
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def OnAfter(self, event):
         if self.row >= self.num_param - 1:
@@ -318,6 +359,12 @@ class ChartWin(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  OnBefore
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def OnBefore(self, event):
         if self.row <= 0:
@@ -329,6 +376,12 @@ class ChartWin(wx.Frame):
 
     # -------------------------------------------------------------------------
     #  update_chart
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def update_chart(self):
         self.check_update.SetValue(self.sheets.get_SL_flag(self.row))
@@ -339,6 +392,9 @@ class ChartWin(wx.Frame):
     #
     #  argument
     #    name_file :  file to open
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def open_file_with_app(self, name_file):
         link_file = pathlib.PurePath(name_file)
@@ -359,12 +415,29 @@ class ChartWin(wx.Frame):
 class Trend():
     sheets = None
     row = 0
-    ax = None
+    ax1 = None
+    ax2 = None
 
+    # font family to display
+    font_family = 'monospace'
+
+    # tick color
+    color_tick = '#c0c0c0'
+
+    # circle size of OOC, OOS
     size_point = 10
-    size_oos = 30
-    size_ooc = 50
+    size_oos_out = 100
+    size_oos_in = 50
+    size_ooc_out = 80
+    size_ooc_in = 40
 
+    # color of OOC, OOS
+    color_ooc_out = 'red'
+    color_ooc_in = 'white'
+    color_oos_out = 'red'
+    color_oos_in = 'white'
+
+    # color of metrics
     SL = 'blue'
     CL = 'red'
     RCL = 'black'
@@ -382,11 +455,19 @@ class Trend():
         self.sheets = sheets
         self.row = row
 
-    def __del__(self):
-        plt.close()
+    #def __del__(self):
+    #    plt.clf()
+    #    plt.close()
+    #    print('DEBUG!')
 
     # -------------------------------------------------------------------------
     #  get
+    #
+    #  argument
+    #    info
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def get(self, info):
         name_part = info['PART']
@@ -411,12 +492,23 @@ class Trend():
         else:
             self.date_last = list(date)[len(date) - 1]
 
-        rcParams['font.family'] = 'monospace'
+        rcParams['font.family'] = self.font_family
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
 
-        self.ax = fig.add_subplot(111, title=name_param)
+        #if self.ax1 is not None:
+        #    self.ax1.clear()
+        #if self.ax2 is not None:
+        #    self.ax2.clear()
+
+        # -----------------------------------------------------------------
+        # add first y axis
+        self.ax1 = fig.add_subplot(111, title=name_param)
         plt.subplots_adjust(left=0.17, right=0.83)
-        self.ax.grid(False)
+        self.ax1.grid(False)
+
+        # -----------------------------------------------------------------
+        # add second y axis wish same range as first y axis
+        self.ax2 = self.ax1.twinx()
 
         if metrics['Spec Type'] == 'Two-Sided':
             self.axhline_two_sided(metrics)
@@ -425,17 +517,22 @@ class Trend():
 
         # Avg
         if not np.isnan(metrics['Avg']):
-            self.ax.axhline(y=metrics['Avg'], linewidth=1, color=self.AVG, label='Avg')
+            self.ax1.axhline(y=metrics['Avg'], linewidth=1, color=self.AVG, label='Avg')
 
         # _/_/_/_/_/_/_/
         # Line
-        self.ax.plot(x, y, linewidth=1, color='gray')
+        self.ax1.plot(x, y, linewidth=1, color='gray')
+        self.ax2.plot(x, y, linewidth=0, color='red') # for debug
 
         # Axis color
-        self.ax.xaxis.label.set_color('gray')
-        self.ax.yaxis.label.set_color('gray')
-        self.ax.tick_params(axis='x', colors='gray')
-        self.ax.tick_params(axis='y', colors='gray')
+        self.ax1.xaxis.label.set_color('gray')
+        self.ax1.yaxis.label.set_color(self.color_tick)
+        self.ax2.yaxis.label.set_color(self.color_tick)
+
+        # default tick color
+        self.ax1.tick_params(axis='x', colors='gray')
+        self.ax1.tick_params(axis='y', colors='gray')
+        self.ax2.tick_params(axis='y', colors='gray')
 
         # Out Of Limits
         if metrics['Spec Type'] == 'Two-Sided':
@@ -444,16 +541,20 @@ class Trend():
             self.violation_one_sided(df, metrics, name_param, x, y)
 
         # DATA POINTS
+
         # _/_/_/_/_/_/_/
         # Histric data
         dataType = 'Historic'
         color_point = 'gray'
         self.draw_points(color_point, dataType, df, x, y)
+
         # _/_/_/_/_/_/_/
         # Recent data
         dataType = 'Recent'
         color_point = 'black'
         self.draw_points(color_point, dataType, df, x, y)
+
+        self.ax2.set_ylim(self.ax1.get_ylim())
 
         # ---------------------------------------------------------------------
         # Label for HORIZONTAL LINE
@@ -461,79 +562,165 @@ class Trend():
         self.add_y_axis_labels(fig, metrics)
         # fig.canvas.draw();
 
+        #print(self.ax1.get_ylim())
+        #print(self.ax2.get_ylim())
+
         return fig
 
     # -------------------------------------------------------------------------
     #  get_last_date
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def get_last_date(self):
         return self.date_last
 
     # -------------------------------------------------------------------------
     #  draw_points
+    #
+    #  argument
+    #    color :
+    #    type  :
+    #    df    :
+    #    x     :
+    #    y     :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def draw_points(self, color, type, df, x, y):
         x_historic = x[df['Data Type'] == type]
         y_historic = y[df['Data Type'] == type]
-        self.ax.scatter(x_historic, y_historic, s=self.size_point, c=color, marker='o', label=type)
+        self.ax1.scatter(x_historic, y_historic, s=self.size_point, c=color, marker='o', label=type)
 
     # -------------------------------------------------------------------------
     #  axhline_one_sided
+    #
+    #  argument
+    #    metrics :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def axhline_one_sided(self, metrics):
         if self.sheets.get_SL_flag(self.row) is False:
             if not np.isnan(metrics['USL']):
-                self.ax.axhline(y=metrics['USL'], linewidth=1, color=self.SL, label='USL')
+                self.ax1.axhline(y=metrics['USL'], linewidth=1, color=self.SL, label='USL')
+                self.ax2.axhline(y=metrics['USL'], linewidth=0, color=self.SL, label='USL')
         if self.flag_no_CL is False:
             if not np.isnan(metrics['UCL']):
-                self.ax.axhline(y=metrics['UCL'], linewidth=1, color=self.CL, label='UCL')
+                self.ax1.axhline(y=metrics['UCL'], linewidth=1, color=self.CL, label='UCL')
             if not np.isnan(metrics['RUCL']):
-                self.ax.axhline(y=metrics['RUCL'], linewidth=1, color=self.RCL, label='RUCL')
+                self.ax1.axhline(y=metrics['RUCL'], linewidth=1, color=self.RCL, label='RUCL')
 
     # -------------------------------------------------------------------------
     #  axhline_two_sided
+    #
+    #  argument
+    #    metrics :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def axhline_two_sided(self, metrics):
         self.axhline_one_sided(metrics)
+
         if not np.isnan(metrics['Target']):
-            self.ax.axhline(y=metrics['Target'], linewidth=1, color=self.TG, label='Target')
+            self.ax1.axhline(y=metrics['Target'], linewidth=1, color=self.TG, label='Target')
+
         if self.flag_no_CL is False:
             if not np.isnan(metrics['RLCL']):
-                self.ax.axhline(y=metrics['RLCL'], linewidth=1, color=self.RCL, label='RLCL')
+                self.ax1.axhline(y=metrics['RLCL'], linewidth=1, color=self.RCL, label='RLCL')
             if not np.isnan(metrics['LCL']):
-                self.ax.axhline(y=metrics['LCL'], linewidth=1, color=self.CL, label='LCL')
+                self.ax1.axhline(y=metrics['LCL'], linewidth=1, color=self.CL, label='LCL')
+
         if self.sheets.get_SL_flag(self.row) is False:
             if not np.isnan(metrics['LSL']):
-                self.ax.axhline(y=metrics['LSL'], linewidth=1, color=self.SL, label='LSL')
+                self.ax1.axhline(y=metrics['LSL'], linewidth=1, color=self.SL, label='LSL')
+                self.ax2.axhline(y=metrics['LSL'], linewidth=0, color=self.SL, label='LSL')
 
     # -------------------------------------------------------------------------
     #  violation_one_sided
+    #
+    #  argument
+    #    df         :
+    #    metrics    :
+    #    name_param :
+    #    x          :
+    #    y          :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def violation_one_sided(self, df, metrics, name_param, x, y):
         # OOC check
-        x_ooc = x[df[name_param] > metrics['UCL']]
-        y_ooc = y[df[name_param] > metrics['UCL']]
-        self.ax.scatter(x_ooc, y_ooc, s=self.size_ooc, c='orange', marker='o', label="Recent")
+        if self.flag_no_CL is False:
+            x_ooc = x[(df[name_param] > metrics['UCL']) & (df['Data Type'] == 'Recent')]
+            y_ooc = y[(df[name_param] > metrics['UCL']) & (df['Data Type'] == 'Recent')]
+            self.draw_circle(self.ax1, x_ooc, y_ooc, self.size_ooc_out, self.size_ooc_in, self.color_ooc_out, self.color_ooc_in)
+
         # OOS check
-        x_oos = x[df[name_param] > metrics['USL']]
-        y_oos = y[df[name_param] > metrics['USL']]
-        self.ax.scatter(x_oos, y_oos, s=self.size_oos, c='red', marker='o', label="Recent")
+        x_oos = x[(df[name_param] > metrics['USL']) & (df['Data Type'] == 'Recent')]
+        y_oos = y[(df[name_param] > metrics['USL']) & (df['Data Type'] == 'Recent')]
+        self.draw_circle(self.ax1, x_oos, y_oos, self.size_oos_out, self.size_oos_in, self.color_oos_out, self.color_oos_in)
 
     # -------------------------------------------------------------------------
     #  violation_two_sided
+    #
+    #  argument
+    #    df         :
+    #    metrics    :
+    #    name_param :
+    #    x          :
+    #    y          :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def violation_two_sided(self, df, metrics, name_param, x, y):
         # OOC check
-        x_ooc = x[(df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])]
-        y_ooc = y[(df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])]
-        self.ax.scatter(x_ooc, y_ooc, s=self.size_ooc, c='orange', marker='o', label="Recent")
+        if self.flag_no_CL is False:
+            x_ooc = x[((df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])) & (df['Data Type'] == 'Recent')]
+            y_ooc = y[((df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])) & (df['Data Type'] == 'Recent')]
+            self.draw_circle(self.ax1, x_ooc, y_ooc, self.size_ooc_out, self.size_ooc_in, self.color_ooc_out, self.color_ooc_in)
+
         # OOS check
-        x_oos = x[(df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])]
-        y_oos = y[(df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])]
-        self.ax.scatter(x_oos, y_oos, s=self.size_oos, c='red', marker='o', label="Recent")
+        x_oos = x[((df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])) & (df['Data Type'] == 'Recent')]
+        y_oos = y[((df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])) & (df['Data Type'] == 'Recent')]
+        self.draw_circle(self.ax1, x_oos, y_oos, self.size_oos_out, self.size_oos_in, self.color_oos_out, self.color_oos_in)
 
     # -------------------------------------------------------------------------
     #  add_y_axis_labels
+    #
+    #  argument
+    #    ax        :
+    #    x         :
+    #    y         :
+    #    size_out  :
+    #    size_in   :
+    #    color_out :
+    #    color_in  :
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def draw_circle(self, ax, x, y, size_out, size_in, color_out, color_in):
+        ax.scatter(x, y, s=size_out, c=color_out, marker='o')
+        ax.scatter(x, y, s=size_in, c=color_in, marker='o')
+
+    # -------------------------------------------------------------------------
+    #  add_y_axis_labels
+    #
+    #  argument
+    #    fig     :
+    #    metrics :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def add_y_axis_labels(self, fig, metrics):
         list_labels_left = []
@@ -585,14 +772,22 @@ class Trend():
 
     # -------------------------------------------------------------------------
     #  add_y_axis_labels_at_left
+    #
+    #  argument
+    #    fig         :
+    #    list_labels :
+    #    metrics     :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def add_y_axis_labels_at_left(self, fig, list_labels, metrics):
         if len(list_labels) > 0:
             # Left Axis: add extra ticks
-            self.add_extra_tick_values(self.ax, fig, list_labels, metrics)
+            self.add_extra_tick_values(self.ax1, fig, list_labels, metrics)
 
             # Left Axis: extra labels
-            labels = [item.get_text() for item in self.ax.get_yticklabels()]
+            labels = [item.get_text() for item in self.ax1.get_yticklabels()]
             nformat = self.get_tick_label_format(labels)
             n = len(labels)
             m = len(list_labels)
@@ -601,10 +796,10 @@ class Trend():
                 label_new = list_labels[i]
                 value = metrics[label_new]
                 labels[k] = label_new + ' = ' + nformat.format(value)
-            self.ax.set_yticklabels(labels)
+            self.ax1.set_yticklabels(labels)
 
             # Left Axis: color
-            yticklabels = self.ax.get_yticklabels()
+            yticklabels = self.ax1.get_yticklabels()
             n = len(yticklabels)
             m = len(list_labels)
             for i in range(m):
@@ -623,20 +818,24 @@ class Trend():
 
     # -------------------------------------------------------------------------
     #  add_y_axis_labels_at_right
+    #
+    #  argument
+    #    fig         :
+    #    list_labels :
+    #    metrics     :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def add_y_axis_labels_at_right(self, fig, list_labels, metrics):
         if len(list_labels) > 0:
-            # -----------------------------------------------------------------
-            # add second y axis wish same range as first y axis
-            ax2 = self.ax.twinx()
-            ax2.set_ylim(self.ax.get_ylim())
-            ax2.tick_params(axis='y', colors='gray')
+            #fig.canvas.draw();
 
             # Right Axis: add extra ticks
-            self.add_extra_tick_values(ax2, fig, list_labels, metrics)
+            self.add_extra_tick_values(self.ax2, fig, list_labels, metrics)
 
             # Right Axis: labels
-            labels = [item.get_text() for item in ax2.get_yticklabels()]
+            labels = [item.get_text() for item in self.ax2.get_yticklabels()]
             nformat = self.get_tick_label_format(labels)
             n = len(labels)
             m = len(list_labels)
@@ -645,10 +844,11 @@ class Trend():
                 label_new = list_labels[i]
                 value = metrics[label_new]
                 labels[k] = nformat.format(value) + ' = ' + label_new
-            ax2.set_yticklabels(labels)
+            self.ax2.set_yticklabels(labels)
+
 
             # Right Axis: color
-            yticklabels = ax2.get_yticklabels()
+            yticklabels = self.ax2.get_yticklabels()
             n = len(yticklabels)
             m = len(list_labels)
             for i in range(m):
@@ -663,8 +863,24 @@ class Trend():
 
                 yticklabels[k].set_color(color)
 
+            # set axis
+            #print(self.ax.get_ylim())
+            #self.ax2.set_ylim(self.ax.get_ylim())
+            #print(self.ax2.get_ylim())
+
+
+
     # -------------------------------------------------------------------------
     #  add_extra_tick_values
+    #
+    #  argument
+    #    ax          :
+    #    fig         :
+    #    list_labels :
+    #    metrics     :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def add_extra_tick_values(self, ax, fig, list_labels, metrics):
         extraticks = []
@@ -677,6 +893,12 @@ class Trend():
 
     # -------------------------------------------------------------------------
     #  get_tick_label_format
+    #
+    #  argument
+    #    labels :
+    #
+    #  return
+    #    nformat - formatted string
     # -------------------------------------------------------------------------
     def get_tick_label_format(self, labels):
         digit = 0

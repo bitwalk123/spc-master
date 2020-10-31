@@ -31,6 +31,12 @@ class ExcelSPC():
 
     # -------------------------------------------------------------------------
     #  init_SL_flag
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def init_SL_flag(self):
         self.SL_flag = []
@@ -41,12 +47,25 @@ class ExcelSPC():
 
     # -------------------------------------------------------------------------
     #  set_SL_flag
+    #
+    #  argument
+    #    row  :
+    #    flag :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def set_SL_flag(self, row, flag):
         self.SL_flag[row] = flag
 
     # -------------------------------------------------------------------------
     #  get_SL_flag
+    #
+    #  argument
+    #    row
+    #
+    #  return
+    #    Spec Limit status for specified row
     # -------------------------------------------------------------------------
     def get_SL_flag(self, row):
         return self.SL_flag[row]
@@ -88,6 +107,13 @@ class ExcelSPC():
 
     # -------------------------------------------------------------------------
     #  get_metrics
+    #
+    #  argument
+    #    name_part :
+    #    param     :
+    #
+    #  return
+    #    dict - metrics dictionary for specified PART and PARAMETER
     # -------------------------------------------------------------------------
     def get_metrics(self, name_part, param):
         df = self.get_master()
@@ -259,16 +285,16 @@ class PowerPoint():
         # insert textbox
         # ---------------------------------------------------------------------
         ##### DEBUG ROUINE for PLACEHOLDER INDEX #####
-        # for shape in slide.placeholders:
+        #for shape in slide.placeholders:
         #    print('%d %s' % (shape.placeholder_format.idx, shape.name))
 
         # Placeholder 1
-        ph1 = shapes.placeholders[1]
+        ph1 = shapes.placeholders[20]
         tf1 = ph1.text_frame
         tf1.text = self.get_body_text_1(metrics)
 
         # Placeholder 2
-        ph2 = shapes.placeholders[12]
+        ph2 = shapes.placeholders[21]
         tf2 = ph2.text_frame
         if metrics['CL Frozen'] == 'Yes':
             SL_status = 'Frozen'
@@ -314,10 +340,11 @@ class PowerPoint():
             dist = 'Unknown'
             ctype = 'n/a'
         text = 'Inspection Method:\t' + metrics['Metrology'] \
-               + '\tMeasurement Type:\t' + metrics['Metrology'] \
+               + '\tMeasurement Type:\t' + metrics['Multiple'] \
                + '\nDistribution:\t' + dist \
                + '\tParameter Type:\tKey' \
-               + '\nChart Type:\t' + ctype
+               + '\nChart Type:\t' + ctype\
+               + '\tUSL = '+ metrics['USL'] + ', LSL = ' + metrics['LSL']
         return text
 
     # -------------------------------------------------------------------------
