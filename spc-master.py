@@ -1,10 +1,16 @@
 #!/usr/bin/env python
+import logging
 import math
 import os.path
 import wx
 import wx.grid
 from office import ExcelSPC
 from pcs import ChartWin
+
+#formatter = '%(asctime)s:%(message)s'
+#logging.basicConfig(format=formatter, filename='error.log', level=logging.DEBUG)
+#logging.critical('critical message')
+#logging.error('error message')
 
 
 # =============================================================================
@@ -23,6 +29,7 @@ class SPCMaster(wx.Frame):
 
     def __init__(self):
         super(SPCMaster, self).__init__(parent=None, id=wx.ID_ANY)
+
         self.Bind(wx.EVT_CLOSE, self.OnCloseFrame)
         self.SetSize(800, 600)
         self.SetIcon(wx.Icon('images/logo.ico', wx.BITMAP_TYPE_ICO))
