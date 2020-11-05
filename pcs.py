@@ -4,6 +4,7 @@ import re
 import subprocess
 import tempfile
 import wx
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib import rcParams
@@ -244,7 +245,7 @@ class ChartWin(wx.Frame):
             'PART': name_part,
             'PARAM': name_param,
         }
-        trend = Trend(self.sheets, self.row)
+        trend = Trend(self, self.sheets, self.row)
         figure = trend.get(info)
         canvas = FigureCanvas(self, -1, figure)
         # del trend
@@ -312,7 +313,7 @@ class ChartWin(wx.Frame):
         for row in loop:
             # get Parameter Name & PART Number
             name_part, name_param = self.get_part_param(row)
-            #print(row + 1, name_part, name_param)
+            # print(row + 1, name_part, name_param)
 
             # create PowerPoint file
             info = {
@@ -322,11 +323,13 @@ class ChartWin(wx.Frame):
             }
 
             # create chart
-            trend = Trend(self.sheets, row)
+            trend = Trend(self, self.sheets, row)
             figure = trend.get(info)
 
             dateObj = trend.get_last_date()
-            if type(dateObj) is str:
+            if dateObj is None:
+                info['Date of Last Lot Received'] = 'n/a'
+            elif type(dateObj) is str:
                 info['Date of Last Lot Received'] = dateObj
             else:
                 info['Date of Last Lot Received'] = dateObj.strftime('%m/%d/%Y')
@@ -396,14 +399,15 @@ class ChartWin(wx.Frame):
     #  open_file_with_app
     #
     #  argument
-    #    name_file :  file to open
+    #    name_file : filename to open with associated application
     #
     #  return
     #    (none)
     # -------------------------------------------------------------------------
     def open_file_with_app(self, name_file):
         link_file = pathlib.PurePath(name_file)
-        # Explorer can cover all cases on Windows NT
+
+        # Windows Explorer can cover all cases to start application with file
         subprocess.Popen(['explorer', link_file])
 
     # -------------------------------------------------------------------------
@@ -418,10 +422,16 @@ class ChartWin(wx.Frame):
 #  Trend class
 # =============================================================================
 class Trend():
+    # initial value of instances
+    parent = None
     sheets = None
     row = 0
     ax1 = None
     ax2 = None
+
+    # plot margin
+    margin_plot_left = 0.17
+    margin_plot_right = 0.83
 
     # font family to display
     font_family = 'monospace'
@@ -451,31 +461,29 @@ class Trend():
 
     # Regular Expression
     pattern1 = re.compile(r'.*_(Max|Min)')  # check whether parameter name includes Max/Min
-    pattern2 = re.compile(r'.*\.(.*)')  # extract right side from floating point in mumber
+    pattern2 = re.compile(r'.*\.(.*)')  # ___ extract right side from floating point in mumber
 
     flag_no_CL = False
     date_last = None
 
-    def __init__(self, sheets, row):
+    def __init__(self, parent, sheets, row):
         plt.close()
+        self.parent = parent
         self.sheets = sheets
         self.row = row
 
-    # def __del__(self):
-    #    plt.clf()
-    #    plt.close()
-    #    print('DEBUG!')
-
     # -------------------------------------------------------------------------
-    #  get
+    #  get - obtain SPC chart
     #
     #  argument
-    #    info
+    #    info : dictionary including parameter specific information
     #
     #  return
-    #    (none)
+    #    plt.figure instance with SPC chart
     # -------------------------------------------------------------------------
     def get(self, info):
+        mpl.rcParams['font.family'] = self.font_family
+
         name_part = info['PART']
         name_param = info['PARAM']
 
@@ -489,7 +497,11 @@ class Trend():
         metrics = self.sheets.get_metrics(name_part, name_param)
         df = self.sheets.get_part(name_part)
         x = df['Sample']
-        y = df[name_param]
+        try:
+            y = df[name_param]
+        except KeyError:
+            return self.KeyErrorHandle(name_param)
+
         date = df['Date']
         # print(date[len(date)])
 
@@ -498,7 +510,6 @@ class Trend():
         else:
             self.date_last = list(date)[len(date) - 1]
 
-        rcParams['font.family'] = self.font_family
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
 
         # if self.ax1 is not None:
@@ -509,7 +520,7 @@ class Trend():
         # -----------------------------------------------------------------
         # add first y axis
         self.ax1 = fig.add_subplot(111, title=name_param)
-        plt.subplots_adjust(left=0.17, right=0.83)
+        plt.subplots_adjust(left=self.margin_plot_left, right=self.margin_plot_right)
         self.ax1.grid(False)
 
         # -----------------------------------------------------------------
@@ -574,13 +585,39 @@ class Trend():
         return fig
 
     # -------------------------------------------------------------------------
+    #  KeyErrorHandle - Error handring for no name_param matching
+    #
+    #  argument
+    #    name_param : Parameter Name
+    #
+    #  return
+    #    plt.figure instance with blank plot frame & parameter name
+    # -------------------------------------------------------------------------
+    def KeyErrorHandle(self, name_param):
+        msg = 'Oops!  There is no value associate with the parameter name, \'' \
+              + name_param + '\'.  Please check the Excel macro/sheet.'
+        dialog = wx.MessageDialog(
+            parent=self.parent,
+            message=msg,
+            caption='Error',
+            pos=wx.DefaultPosition,
+            style=wx.OK | wx.ICON_ERROR
+        )
+        dialog.ShowModal()
+        # return blank figure
+        fig = plt.figure(dpi=100, figsize=(10, 3.5))
+        fig.add_subplot(111, title=name_param)
+        plt.subplots_adjust(left=self.margin_plot_left, right=self.margin_plot_right)
+        return fig
+
+    # -------------------------------------------------------------------------
     #  get_last_date
     #
     #  argument
     #    (none)
     #
     #  return
-    #    (none)
+    #    latest data information of the data
     # -------------------------------------------------------------------------
     def get_last_date(self):
         return self.date_last

@@ -7,6 +7,9 @@ from pptx.util import Inches
 from pptx.util import Pt
 
 
+# =============================================================================
+#  ExcelSPC class
+# =============================================================================
 class ExcelSPC():
     filename = None
     sheets = None
@@ -186,7 +189,6 @@ class ExcelSPC():
         # delete row including NaN
         df = df.dropna(how='all')
 
-
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  the first row od data sheet is used for 'Create Charts' button for
         #  the Excel macro
@@ -204,7 +206,7 @@ class ExcelSPC():
         list_colname = list(df.loc[0])
         df1.columns = list_colname
 
-        #for colname in ['Sample', 'Date', 'Job ID or Lot ID', 'Serial Number', 'Data Type']:
+        # for colname in ['Sample', 'Date', 'Job ID or Lot ID', 'Serial Number', 'Data Type']:
         df1 = df1.dropna(subset=['Date'])
 
         # eliminate 'Hide' data
@@ -268,6 +270,13 @@ class PowerPoint():
 
     # -------------------------------------------------------------------------
     #  add_slide
+    #
+    #  argument
+    #    sheets :
+    #    info   :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def add_slide(self, sheets, info):
         metrics = sheets.get_metrics(info['PART'], info['PARAM'])
@@ -289,7 +298,7 @@ class PowerPoint():
         # insert textbox
         # ---------------------------------------------------------------------
         ##### DEBUG ROUINE for PLACEHOLDER INDEX #####
-        #for shape in slide.placeholders:
+        # for shape in slide.placeholders:
         #    print('%d %s' % (shape.placeholder_format.idx, shape.name))
 
         # Placeholder 1
@@ -316,9 +325,14 @@ class PowerPoint():
         # ---------------------------------------------------------------------
         # self.create_table(metrics, shapes)
 
-
     # -------------------------------------------------------------------------
     #  get_body_text_1
+    #
+    #  argument
+    #    metrics :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def get_body_text_1(self, metrics):
         # Chart Type Information
@@ -333,7 +347,7 @@ class PowerPoint():
             ctype = 'n/a'
         # Spec Information
         if metrics['Spec Type'] == 'Two-Sided':
-            spec = '\tUSL = '+ metrics['USL'] + ', LSL = ' + metrics['LSL']
+            spec = '\tUSL = ' + metrics['USL'] + ', LSL = ' + metrics['LSL']
         elif metrics['Spec Type'] == 'One-Sided':
             spec = '\tUSL = ' + metrics['USL']
         else:
@@ -343,7 +357,7 @@ class PowerPoint():
                + '\tMeasurement Type:\t' + metrics['Multiple'] \
                + '\nDistribution:\t' + dist \
                + '\tParameter Type:\tKey' \
-               + '\nChart Type:\t' + ctype\
+               + '\nChart Type:\t' + ctype \
                + spec
         return text
 
@@ -370,6 +384,13 @@ class PowerPoint():
 
     # -------------------------------------------------------------------------
     #  create_table
+    #
+    #  argument
+    #    metrics :
+    #    shapes  :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def create_table(self, metrics, shapes):
         rows = 10
@@ -461,6 +482,12 @@ class PowerPoint():
 
     # -------------------------------------------------------------------------
     #  check_dict
+    #
+    #  argument
+    #    dict :
+    #
+    #  return
+    #    dict after corrected
     # -------------------------------------------------------------------------
     def check_dict(self, dict):
         for key in dict:
@@ -480,6 +507,14 @@ class PowerPoint():
 
     # -------------------------------------------------------------------------
     #  floatFormat
+    #
+    #  argument
+    #    dict  :
+    #    key   :
+    #    value :
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def floatFormat(self, dict, key, value):
         if math.isnan(value):

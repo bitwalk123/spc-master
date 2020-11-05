@@ -7,19 +7,22 @@ import wx.grid
 from office import ExcelSPC
 from pcs import ChartWin
 
-#formatter = '%(asctime)s:%(message)s'
-#logging.basicConfig(format=formatter, filename='error.log', level=logging.DEBUG)
-#logging.critical('critical message')
-#logging.error('error message')
+
+# formatter = '%(asctime)s:%(message)s'
+# logging.basicConfig(format=formatter, filename='error.log', level=logging.DEBUG)
+# logging.critical('critical message')
+# logging.error('error message')
 
 
 # =============================================================================
 #  SPCMaster
 # =============================================================================
 class SPCMaster(wx.Frame):
+    # Application information
     app_name = 'SPC Master'
     app_ver = '0.1 (alpha)'
 
+    # initialize instances
     notebook = None
     statusbar = None
     grid_master = None
