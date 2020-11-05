@@ -78,11 +78,23 @@ class SPCMaster(wx.Frame):
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         # check if read format is appropriate ot not
         if self.sheets.valid is not True:
-            self.statusbar.SetStatusText('Not appropriate format!')
+            msg = 'Not appropriate format!'
+            self.statusbar.SetStatusText(msg)
+            dialog = wx.MessageDialog(
+                parent=self,
+                message=msg,
+                caption='Warning',
+                pos=wx.DefaultPosition,
+                style=wx.OK | wx.ICON_ERROR
+            )
+            dialog.ShowModal()
 
             # delete instance
             self.sheets = None
             return
+
+        # cleat statusbar message
+        self.statusbar.SetStatusText('')
 
         # update application title
         self.set_app_title(filename)

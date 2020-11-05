@@ -30,6 +30,8 @@ class ExcelSPC():
         self.filename = filename
         self.sheets = self.read(filename)
         self.valid = self.check_valid_sheet(self.sheets)
+        if self.valid is False:
+            return
         self.init_SL_flag()
 
     # -------------------------------------------------------------------------
@@ -86,8 +88,11 @@ class ExcelSPC():
     def check_valid_sheet(self, sheets):
         # check if 'Master' tab exists
         if 'Master' in sheets.keys():
-            self.sheets['Master'].columns = self.header_master
-            return True
+            if len(self.sheets['Master'].columns) != len(self.header_master):
+                return False
+            else:
+                self.sheets['Master'].columns = self.header_master
+                return True
         else:
             return False
 
