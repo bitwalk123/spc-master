@@ -212,7 +212,7 @@ class ExcelSPC():
         df1.columns = list_colname
 
         # for colname in ['Sample', 'Date', 'Job ID or Lot ID', 'Serial Number', 'Data Type']:
-        df1 = df1.dropna(subset=['Date'])
+        df1 = df1.dropna(subset=['Data Type'])
 
         # eliminate 'Hide' data
         df2 = df1[df1['Data Type'] != 'Hide']
