@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pathlib
 import re
@@ -327,8 +328,15 @@ class ChartWin(wx.Frame):
             figure = trend.get(info)
 
             dateObj = trend.get_last_date()
+            # print(dateObj)
+            # print(type(dateObj))
             if dateObj is None:
                 info['Date of Last Lot Received'] = 'n/a'
+            elif type(dateObj) is float:
+                if math.isnan(dateObj):
+                    info['Date of Last Lot Received'] = 'n/a'
+                else:
+                    info['Date of Last Lot Received'] = str(dateObj)
             elif type(dateObj) is str:
                 info['Date of Last Lot Received'] = dateObj
             else:
