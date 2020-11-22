@@ -20,7 +20,7 @@ from pcs import ChartWin
 class SPCMaster(wx.Frame):
     # Application information
     app_name = 'SPC Master'
-    app_ver = '0.2 (alpha)'
+    app_ver = '0.3 (alpha)'
 
     # initialize instances
     notebook = None
