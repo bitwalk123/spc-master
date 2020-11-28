@@ -8,17 +8,12 @@ from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
     QApplication,
     QFileDialog,
-    QHBoxLayout,
     QMainWindow,
     QMessageBox,
-    QPushButton,
     QStatusBar,
-    QTableView,
     QTabWidget,
     QToolBar,
     QToolButton,
-    QVBoxLayout,
-    QWidget,
 )
 from office import ExcelSPC
 from worksheet import SheetMaster
@@ -26,28 +21,25 @@ from worksheet import SheetMaster
 
 class SPCMaster(QMainWindow):
     # Application information
-    app_name = 'SPC Master'
-    app_ver = '0.4 (alpha)'
+    app_name: str = 'SPC Master'
+    app_ver: str = '0.4 (alpha)'
 
     # initialize instances
-    notebook = None
-    statusbar = None
-    grid_master = None
-    sheets = None
+    notebook: QTabWidget = None
+    statusbar: QStatusBar = None
+    sheets: ExcelSPC = None
     chart = None
-    num_param = 0
 
     # icons
-    icon_logo = 'images/logo.ico'
-    icon_excel = 'images/excel.png'
-    icon_warn = 'image/warning.png'
+    icon_logo: str = 'images/logo.ico'
+    icon_excel: str = 'images/excel.png'
+    icon_warn: str = 'image/warning.png'
 
     # filter for file extentions
-    filters = 'Excel file (*.xlsx *.xlsm);; All (*.*)'
+    filters: str = 'Excel file (*.xlsx *.xlsm);; All (*.*)'
 
     def __init__(self):
         super().__init__()
-        # super(SPCMaster, self).__init__()
 
         self.initUI()
         self.setWindowIcon(QIcon(self.icon_logo))
@@ -88,8 +80,8 @@ class SPCMaster(QMainWindow):
     #  return
     #    title string
     # -------------------------------------------------------------------------
-    def setAppTitle(self, filename=None):
-        app_title = self.app_name + ' ' + self.app_ver
+    def setAppTitle(self, filename: str = None):
+        app_title: str = self.app_name + ' ' + self.app_ver
         if filename is not None:
             app_title = app_title + ' - ' + os.path.basename(filename)
 
@@ -155,20 +147,21 @@ class SPCMaster(QMainWindow):
         dialog: QFileDialog = QFileDialog()
         dialog.setNameFilter(self.filters)
         if dialog.exec_():
-            filename = dialog.selectedFiles()[0]
+            filename: str = dialog.selectedFiles()[0]
             self.readExcel(filename)
 
     # -------------------------------------------------------------------------
     #  closeEvent
     # -------------------------------------------------------------------------
     def closeEvent(self, event):
-        reply: QMessageBox = QMessageBox.warning(
+        reply: QMessageBox.StandardButton = QMessageBox.warning(
             self,
             'Quit App',
             'Are you sure you want to quit?',
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
+        print(type(reply))
         if reply == QMessageBox.Yes:
             event.accept()
         else:
