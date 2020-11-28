@@ -26,10 +26,10 @@ class ExcelSPC():
                      'Recent Std Dev', 'Cpk for All Points', 'PPM for All Points',
                      'Cpk for Historic & Recent Points', 'PPM for Historic & Recent Points']
 
-    def __init__(self, filename):
-        self.filename = filename
-        self.sheets = self.read(filename)
-        self.valid = self.check_valid_sheet(self.sheets)
+    def __init__(self, filename: str):
+        self.filename: str = filename
+        self.sheets: dict = self.read(filename)
+        self.valid: bool = self.check_valid_sheet(self.sheets)
         if self.valid is False:
             return
         self.init_SL_flag()
@@ -60,7 +60,7 @@ class ExcelSPC():
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def set_SL_flag(self, row, flag):
+    def set_SL_flag(self, row: int, flag: bool):
         self.SL_flag[row] = flag
 
     # -------------------------------------------------------------------------
@@ -70,9 +70,9 @@ class ExcelSPC():
     #    row
     #
     #  return
-    #    Spec Limit status for specified row
+    #    bool: Spec Limit status for specified row
     # -------------------------------------------------------------------------
-    def get_SL_flag(self, row):
+    def get_SL_flag(self, row: int) -> bool:
         return self.SL_flag[row]
 
     # -------------------------------------------------------------------------
@@ -85,7 +85,7 @@ class ExcelSPC():
     #  return
     #    True if dataframe is valid for SPC, otherwise False
     # -------------------------------------------------------------------------
-    def check_valid_sheet(self, sheets):
+    def check_valid_sheet(self, sheets) -> bool:
         # check if 'Master' tab exists
         if 'Master' in sheets.keys():
             if len(self.sheets['Master'].columns) != len(self.header_master):
@@ -106,8 +106,8 @@ class ExcelSPC():
     #  return
     #    pandas dataframe of 'Master' tab
     # -------------------------------------------------------------------------
-    def get_master(self):
-        df = self.sheets['Master']
+    def get_master(self) -> pd.DataFrame:
+        df: pd.DataFrame = self.sheets['Master']
         # drop row if column 'Part Number' is NaN
         df = df.dropna(subset=['Part Number'])
 

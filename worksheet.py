@@ -1,3 +1,8 @@
+import pandas as pd
+import numpy as np
+import math
+from office import ExcelSPC
+
 from typing import Any
 from PySide2.QtCore import (
     Qt,
@@ -10,37 +15,38 @@ from PySide2.QtWidgets import (
 )
 
 
-class MasterTableModel(QAbstractTableModel):
-    def __init__(self):
+class SPCTableModel(QAbstractTableModel):
+    def __init__(self, df: pd.DataFrame, col_headers: list):
         QAbstractTableModel.__init__(self)
-        self.colheader_master = ["NAME", "AGE", "COUNTRY"]
-        self.data_master = [
-            ["Taro", 24, "Japan"],
-            ["Jiro", 20, "Japan"],
-            ["David", 32, "USA"],
-            ["Wattson", 15, "US"]
-        ]
+        self.df: pd.DataFrame = df
+        self.col_headers: list = col_headers
 
     def rowCount(self, parent=QModelIndex()) -> int:
-        return len(self.data_master)
+        return len(self.df)
 
     def columnCount(self, parent=QModelIndex()) -> int:
-        return len(self.colheader_master)
+        return len(self.df.columns)
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):
         if role != Qt.DisplayRole:
             return None
         if orientation == Qt.Horizontal:
-            return self.colheader_master[section]
+            return self.col_headers[section]
         else:
             return "{}".format(section + 1)
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> Any:
         if role == Qt.DisplayRole:
-            return self.data_master[index.row()][index.column()]
+            value = self.df.iat[index.row(), index.column()]
+            if type(value) is np.int64:
+                value = value.tolist()
+            elif type(value) is np.float64:
+                value = value.tolist()
+            return value
 
 
 class SheetMaster(QTableView):
-    def __init__(self):
+    def __init__(self, sheets: ExcelSPC):
         super().__init__()
-        self.setModel(MasterTableModel())
+        df: pd.DataFrame = sheets.get_master()
+        self.setModel(SPCTableModel(df, sheets.get_header_master()))

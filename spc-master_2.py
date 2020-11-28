@@ -116,13 +116,10 @@ class SPCMaster(QMainWindow):
             return
 
         self.setAppTitle(filename)
-
-        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-        # create tabs for tables & charts
-        self.create_tabs()
+        self.createTabs()
 
     # -------------------------------------------------------------------------
-    #  create_tabs
+    #  createTabs
     #  create tab instances
     #
     #  argument
@@ -131,19 +128,13 @@ class SPCMaster(QMainWindow):
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def create_tabs(self):
+    def createTabs(self):
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  'Master' tab
-        self.create_tab_master()
-
-        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-        #  PART tab(s)
-        # list_part = self.sheets.get_unique_part_list()
-        # for name_part in list_part:
-        #    self.create_tab_part(name_part)
+        self.createTabMaster()
 
     # -------------------------------------------------------------------------
-    #  create_tab_master
+    #  createTabMaster
     #  creating 'Master' tab
     #
     #  argument
@@ -152,22 +143,8 @@ class SPCMaster(QMainWindow):
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def create_tab_master(self):
-        df = self.sheets.get_master()
-        r = len(df)
-        c = len(df.columns)
-        # panel_master = SpreadSheet(self.notebook, row=r, col=c)
-        # self.notebook.InsertPage(0, panel_master, 'Master')
-
-        # self.grid_master = panel_master.get_grid()
-        # double click event definition for opening plot window
-        # self.grid_master.Bind(
-        #    wx.grid.EVT_GRID_LABEL_LEFT_DCLICK,
-        #    self.OnHeaderDblClicked
-        # )
-        # self.num_param = self.gen_table(df, self.grid_master)
-        # panel_master.update()
-        tab_master: SheetMaster = SheetMaster()
+    def createTabMaster(self):
+        tab_master: SheetMaster = SheetMaster(self.sheets)
         self.notebook.addTab(tab_master, 'Master')
 
     # -------------------------------------------------------------------------
