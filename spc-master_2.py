@@ -27,7 +27,7 @@ from worksheet import SheetMaster
 class SPCMaster(QMainWindow):
     # Application information
     app_name = 'SPC Master'
-    app_ver = '0.3 (alpha)'
+    app_ver = '0.4 (alpha)'
 
     # initialize instances
     notebook = None
