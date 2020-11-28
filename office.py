@@ -249,6 +249,19 @@ class ExcelSPC():
         return list_part
 
     # -------------------------------------------------------------------------
+    #  get_header_master
+    #  get header list used for making table
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    self.header_master
+    # -------------------------------------------------------------------------
+    def get_header_master(self):
+        return self.header_master
+
+    # -------------------------------------------------------------------------
     #  read
     #  read specified Excel file
     #
