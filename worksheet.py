@@ -51,6 +51,7 @@ class SheetMaster(QTableView):
         # no word wrap
         self.setWordWrap(False)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 
         # master data frame
         df: pd.DataFrame = sheets.get_master()
