@@ -8,6 +8,7 @@ from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
     QApplication,
     QFileDialog,
+    QHeaderView,
     QMainWindow,
     QMessageBox,
     QStatusBar,
@@ -88,29 +89,6 @@ class SPCMaster(QMainWindow):
         self.setWindowTitle(app_title)
 
     # -------------------------------------------------------------------------
-    #  readExcel
-    #  Aggregation from Excel for SPC
-    #
-    #  argument
-    #    filename : Excel file to read
-    #
-    #  return
-    #    (none)
-    # -------------------------------------------------------------------------
-    @Slot()
-    def readExcel(self, filename):
-        if self.sheets is not None:
-            del self.sheets
-        self.sheets: ExcelSPC = ExcelSPC(filename)
-        if self.sheets.valid is not True:
-            QMessageBox.critical(self, 'Error', 'Not appropriate format!')
-            self.sheets = None
-            return
-
-        self.setAppTitle(filename)
-        self.createTabs()
-
-    # -------------------------------------------------------------------------
     #  createTabs
     #  create tab instances
     #
@@ -137,18 +115,44 @@ class SPCMaster(QMainWindow):
     # -------------------------------------------------------------------------
     def createTabMaster(self):
         tab_master: SheetMaster = SheetMaster(self.sheets)
+
+        row_header: QHeaderView = tab_master.verticalHeader()
+        row_header.sectionDoubleClicked.connect(self.handleRowHeaderDblClicked)
+
         self.notebook.addTab(tab_master, 'Master')
 
+    @Slot()
+    def handleRowHeaderDblClicked(self, row: int):
+        print('Row %d is selected' % row)
+
     # -------------------------------------------------------------------------
-    #  showDialog
+    #  openFile
     # -------------------------------------------------------------------------
     @Slot()
     def openFile(self):
+        # file selection dialog
         dialog: QFileDialog = QFileDialog()
         dialog.setNameFilter(self.filters)
-        if dialog.exec_():
-            filename: str = dialog.selectedFiles()[0]
-            self.readExcel(filename)
+        if not dialog.exec_():
+            return
+
+        # read selected file
+        filename: str = dialog.selectedFiles()[0]
+        if self.sheets is not None:
+            del self.sheets
+        self.sheets: ExcelSPC = ExcelSPC(filename)
+
+        # check if sheets have valid format or not
+        if self.sheets.valid is not True:
+            QMessageBox.critical(self, 'Error', 'Not appropriate format!')
+            self.sheets = None
+            return
+
+        # update application title
+        self.setAppTitle(filename)
+
+        # create new tab
+        self.createTabs()
 
     # -------------------------------------------------------------------------
     #  closeEvent

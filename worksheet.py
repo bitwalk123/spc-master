@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import math
 from office import ExcelSPC
 from typing import Any
 
@@ -8,12 +7,8 @@ from PySide2.QtCore import (
     Qt,
     QAbstractTableModel,
     QModelIndex,
-    QItemSelectionModel,
-    Slot,
 )
-# For Sample
 from PySide2.QtWidgets import (
-    QHeaderView,
     QTableView,
 )
 
@@ -53,9 +48,3 @@ class SheetMaster(QTableView):
         super().__init__()
         df: pd.DataFrame = sheets.get_master()
         self.setModel(SPCTableModel(df, sheets.get_header_master()))
-        row_header: QHeaderView = self.verticalHeader()
-        row_header.sectionDoubleClicked.connect(self.handleRowHeaderDblClicked)
-
-    @Slot()
-    def handleRowHeaderDblClicked(self, row: int):
-        print('Row %d is selected' % row)
