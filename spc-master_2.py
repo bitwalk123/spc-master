@@ -12,9 +12,11 @@ from PySide2.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QStatusBar,
+    QTableView,
     QTabWidget,
     QToolBar,
     QToolButton,
+    QWidget,
 )
 from office import ExcelSPC
 from worksheet import SheetMaster
@@ -26,17 +28,18 @@ class SPCMaster(QMainWindow):
     app_ver: str = '0.4 (alpha)'
 
     # initialize instances
-    notebook: QTabWidget = None
+    tabwidget: QTabWidget = None
     statusbar: QStatusBar = None
     sheets: ExcelSPC = None
     chart = None
 
     # icons
-    icon_logo: str = 'images/logo.ico'
+    icon_book: str = 'images/book.png'
     icon_excel: str = 'images/excel.png'
+    icon_logo: str = 'images/logo.ico'
     icon_warn: str = 'image/warning.png'
 
-    # filter for file extentions
+    # filter for file extentions to read
     filters: str = 'Excel file (*.xlsx *.xlsm);; All (*.*)'
 
     def __init__(self):
@@ -64,8 +67,9 @@ class SPCMaster(QMainWindow):
         toolbar.addWidget(tool_excel)
 
         # Tab widget
-        self.notebook: QTabWidget = QTabWidget()
-        self.setCentralWidget(self.notebook)
+        self.tabwidget: QTabWidget = QTabWidget()
+        self.tabwidget.setTabPosition(QTabWidget.South)
+        self.setCentralWidget(self.tabwidget)
 
         # Status Bar
         self.statusbar: QStatusBar = QStatusBar()
@@ -99,13 +103,18 @@ class SPCMaster(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def createTabs(self):
+        # delete contents of tab if exist
+        for idx in range(self.tabwidget.count() - 1, -1, -1):
+            tabContent: QWidget = self.tabwidget.widget(idx)
+            self.tabwidget.removeTab(idx)
+            tabContent.destroy()
+
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
         #  'Master' tab
         self.createTabMaster()
 
     # -------------------------------------------------------------------------
-    #  createTabMaster
-    #  creating 'Master' tab
+    #  createTabMaster - creating 'Master' tab
     #
     #  argument
     #    sheet : object of Excel sheet
@@ -114,19 +123,32 @@ class SPCMaster(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def createTabMaster(self):
-        tab_master: SheetMaster = SheetMaster(self.sheets)
+        # create Master sheet
+        tbl_master: QTableView = SheetMaster(self.sheets)
+        icon_master: QIcon = QIcon(self.icon_book)
 
-        row_header: QHeaderView = tab_master.verticalHeader()
-        row_header.sectionDoubleClicked.connect(self.handleRowHeaderDblClicked)
+        # double click event at row header
+        header_row: QHeaderView = tbl_master.verticalHeader()
+        header_row.sectionDoubleClicked.connect(self.handleRowHeaderDblClick)
 
-        self.notebook.addTab(tab_master, 'Master')
+        # add Master sheet to Tab widget
+        self.tabwidget.addTab(tbl_master, icon_master, 'Master')
 
+    # -------------------------------------------------------------------------
+    #  handleRowHeaderDblClick - event handle for row header double click
+    #
+    #  argument
+    #    row : row number which is clicked
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
     @Slot()
-    def handleRowHeaderDblClicked(self, row: int):
+    def handleRowHeaderDblClick(self, row: int):
         print('Row %d is selected' % row)
 
     # -------------------------------------------------------------------------
-    #  openFile
+    #  openFile - open file dialog
     # -------------------------------------------------------------------------
     @Slot()
     def openFile(self):
@@ -165,7 +187,6 @@ class SPCMaster(QMainWindow):
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
-        print(type(reply))
         if reply == QMessageBox.Yes:
             event.accept()
         else:

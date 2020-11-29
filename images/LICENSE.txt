@@ -1,3 +1,10 @@
+IMAGE: book.png
+ORIGINAL FILENAME: iconfinder_Closed_Book_Icon_1741323.png
+URL: https://www.iconfinder.com/icons/1741323/download/png/128
+AYTHOR: Boca Tutor
+LICENSE: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+
+
 IMAGE: excel.png
 ORIGINAL FILENAME: iconfinder_logo_brand_brands_logos_excel_2993694.png
 URL: https://www.iconfinder.com/icons/2993694/download/png/128
@@ -10,7 +17,6 @@ ORIGINAL FILENAME: iconfinder_72-powerpoint_4202099.png
 URL: https://www.iconfinder.com/icons/4202099/download/png/24
 AUTHOR: Flatart, Pakisatn
 LICENSE: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-
 
 
 Attribution 3.0 Unported (CC BY 3.0)

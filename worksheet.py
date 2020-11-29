@@ -9,6 +9,7 @@ from PySide2.QtCore import (
     QModelIndex,
 )
 from PySide2.QtWidgets import (
+    QHeaderView,
     QTableView,
 )
 
@@ -46,5 +47,13 @@ class SPCTableModel(QAbstractTableModel):
 class SheetMaster(QTableView):
     def __init__(self, sheets: ExcelSPC):
         super().__init__()
+
+        # no word wrap
+        self.setWordWrap(False)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+
+        # master data frame
         df: pd.DataFrame = sheets.get_master()
+
+        # set table model
         self.setModel(SPCTableModel(df, sheets.get_header_master()))
