@@ -126,16 +126,16 @@ class SPCMaster(QMainWindow):
     # -------------------------------------------------------------------------
     def createTabMaster(self):
         # create Master sheet
-        tbl_master: SheetMaster = SheetMaster(self.sheets)
-        self.num_param: int = tbl_master.get_num_param()
+        self.sheet_master: SheetMaster = SheetMaster(self.sheets)
+        self.num_param: int = self.sheet_master.get_num_param()
         icon_master: QIcon = QIcon(self.icon_book)
 
         # double click event at row header
-        header_row: QHeaderView = tbl_master.verticalHeader()
+        header_row: QHeaderView = self.sheet_master.verticalHeader()
         header_row.sectionDoubleClicked.connect(self.handleRowHeaderDblClick)
 
         # add Master sheet to Tab widget
-        self.tabwidget.addTab(tbl_master, icon_master, 'Master')
+        self.tabwidget.addTab(self.sheet_master, icon_master, 'Master')
 
     # -------------------------------------------------------------------------
     #  handleRowHeaderDblClick - event handle for row header double click
@@ -153,6 +153,18 @@ class SPCMaster(QMainWindow):
             self.chart.deleteLater()
 
         self.chart = ChartWin(self, self.sheets, self.num_param, row)
+
+    # -------------------------------------------------------------------------
+    #  setRowSelect
+    #
+    #  argument
+    #    row : row to be selected
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def setMasterRowSelect(self, row: int):
+        self.sheet_master.selectRow(row)
 
     # -------------------------------------------------------------------------
     #  openFile - open file dialog

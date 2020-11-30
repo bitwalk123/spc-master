@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import re
 import matplotlib as mpl
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -55,14 +56,14 @@ class ChartWin(QMainWindow):
         tool_param_before: QToolButton = QToolButton()
         tool_param_before.setIcon(QIcon(self.icon_before))
         tool_param_before.setStatusTip('before PARAMETER')
-        # tool_param_before.clicked.connect(self.openFile)
+        tool_param_before.clicked.connect(self.prev_chart)
         toolbar.addWidget(tool_param_before)
 
         # Add buttons to toolbar
         tool_param_after: QToolButton = QToolButton()
         tool_param_after.setIcon(QIcon(self.icon_after))
         tool_param_after.setStatusTip('after PARAMETER')
-        # tool_param_after.clicked.connect(self.openFile)
+        tool_param_after.clicked.connect(self.next_chart)
         toolbar.addWidget(tool_param_after)
 
         # Status Bar
@@ -83,41 +84,48 @@ class ChartWin(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def create_chart(self):
-        # get Parameter Name & PART Number
-        name_part, name_param = self.get_part_param(self.row)
-        self.updateTitle(name_part, name_param)
-
         # Canvas for SPC Chart
         if self.canvas is not None:
+            # CentralWidget
+            self.takeCentralWidget()
             del self.canvas
+            # DockWidget
+            self.removeDockWidget(self.dock)
+            self.dock.deleteLater()
+            del self.navtoolbar
+
+        # PART Number & PARAMETER Name
+        name_part, name_param = self.get_part_param(self.row)
+        self.updateTitle(name_part, name_param)
+        # CentralWidget
         self.canvas: FigureCanvas = self.gen_chart(name_part, name_param)
-        navtoolbar: NavigationToolbar = NavigationToolbar(self.canvas, self)
-        dock: QDockWidget = QDockWidget()
-        dock.setWidget(navtoolbar)
         self.setCentralWidget(self.canvas)
-        self.addDockWidget(Qt.BottomDockWidgetArea, dock)
+        # DockWidget
+        self.navtoolbar: NavigationToolbar = NavigationToolbar(self.canvas, self)
+        self.dock: QDockWidget = QDockWidget()
+        self.dock.setWidget(self.navtoolbar)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock)
 
         # update row selection of 'Master' sheet
-        # self.parent.setMasterRowSelect(self.row)
+        self.parent.setMasterRowSelect(self.row)
 
     # -------------------------------------------------------------------------
-    #  get_part_param - get PART No & Parameter Name from sheet
+    #  get_part_param - get PART No & PARAMETER Name from sheet
     #
     #  argument
-    #    sheets : data sheet from Excel file
-    #    row    : row object on the Master Table
+    #    row   : row object on the Master Table
     #
     #  return
-    #    name_part  :
-    #    name_param :
+    #    part  : PART Name
+    #    param : PPARAMETER Name
     # -------------------------------------------------------------------------
-    def get_part_param(self, row):
-        df_master = self.sheets.get_master()
-        df_row = df_master.iloc[row]
-        name_part = df_row['Part Number']
-        name_param = df_row['Parameter Name']
+    def get_part_param(self, row: int):
+        df_master: pd.DataFrame = self.sheets.get_master()
+        df_row: int = df_master.iloc[row]
+        part: str = df_row['Part Number']
+        param: str = df_row['Parameter Name']
 
-        return name_part, name_param
+        return part, param
 
     # -------------------------------------------------------------------------
     #  updateTitle - update window title
@@ -136,24 +144,71 @@ class ChartWin(QMainWindow):
     #  gen_chart - generate chart
     #
     #  argument
-    #    name_part  : PART Number
-    #    name_param : Parameter Name
-    #    sheet      : data sheet from Excel file
+    #    part  : PART Number
+    #    param : Parameter Name
+    #    sheet : data sheet from Excel file
     #
     #  return
     #    canvas : generated chart
     # -------------------------------------------------------------------------
-    def gen_chart(self, name_part, name_param):
+    def gen_chart(self, part: str, param: str):
         # create PowerPoint file
         info = {
-            'PART': name_part,
-            'PARAM': name_param,
+            'PART': part,
+            'PARAM': param,
         }
-        trend = Trend(self, self.sheets, self.row)
-        figure = trend.get(info)
-        canvas = FigureCanvas(figure)
+        trend: Trend = Trend(self, self.sheets, self.row)
+        figure: mpl.figure.Figure = trend.get(info)
+        canvas: FigureCanvas = FigureCanvas(figure)
 
         return canvas
+
+    # -------------------------------------------------------------------------
+    #  next_chart
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def next_chart(self, event: bool):
+        if self.row >= self.num_param - 1:
+            self.row = self.num_param - 1
+            return
+
+        self.row += 1
+        self.update_chart()
+
+    # -------------------------------------------------------------------------
+    #  prev_chart
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def prev_chart(self, event: bool):
+        if self.row <= 0:
+            self.row = 0
+            return
+
+        self.row -= 1
+        self.update_chart()
+
+    # -------------------------------------------------------------------------
+    #  update_chart
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def update_chart(self):
+        # self.check_update.SetValue(self.sheets.get_SL_flag(self.row))
+        self.create_chart()
 
 
 # =============================================================================
@@ -168,43 +223,43 @@ class Trend():
     ax2 = None
 
     # plot margin
-    margin_plot_left = 0.17
-    margin_plot_right = 0.83
+    margin_plot_left: float = 0.17
+    margin_plot_right: float = 0.83
 
     # font family to display
-    font_family = 'monospace'
+    font_family: str = 'monospace'
 
     # tick color
-    color_tick = '#c0c0c0'
+    color_tick: str = '#c0c0c0'
 
     # circle size of OOC, OOS
-    size_point = 10
-    size_oos_out = 100
-    size_oos_in = 50
-    size_ooc_out = 80
-    size_ooc_in = 40
+    size_point: int = 10
+    size_oos_out: int = 100
+    size_oos_in: int = 50
+    size_ooc_out: int = 80
+    size_ooc_in: int = 40
 
     # color of OOC, OOS
-    color_ooc_out = 'red'
-    color_ooc_in = 'white'
-    color_oos_out = 'red'
-    color_oos_in = 'white'
+    color_ooc_out: str = 'red'
+    color_ooc_in: str = 'white'
+    color_oos_out: str = 'red'
+    color_oos_in: str = 'white'
 
     # color of metrics
-    SL = 'blue'
-    CL = 'red'
-    RCL = 'black'
-    TG = 'purple'
-    AVG = 'green'
+    SL: str = 'blue'
+    CL: str = 'red'
+    RCL: str = 'black'
+    TG: str = 'purple'
+    AVG: str = 'green'
 
     # Regular Expression
-    pattern1 = re.compile(r'.*_(Max|Min)')  # check whether parameter name includes Max/Min
-    pattern2 = re.compile(r'.*\.(.*)')  # ___ extract right side from floating point in mumber
+    pattern1: str = re.compile(r'.*_(Max|Min)')  # check whether parameter name includes Max/Min
+    pattern2: str = re.compile(r'.*\.(.*)')  # ___ extract right side from floating point in mumber
 
-    flag_no_CL = False
+    flag_no_CL: bool = False
     date_last = None
 
-    def __init__(self, parent, sheets, row):
+    def __init__(self, parent: ChartWin, sheets: ExcelSPC, row: int):
         plt.close()
         self.parent = parent
         self.sheets = sheets
@@ -219,14 +274,14 @@ class Trend():
     #  return
     #    plt.figure instance with SPC chart
     # -------------------------------------------------------------------------
-    def get(self, info):
+    def get(self, info: dict):
         mpl.rcParams['font.family'] = self.font_family
 
-        name_part = info['PART']
-        name_param = info['PARAM']
+        name_part: str = info['PART']
+        name_param: str = info['PARAM']
 
         # check whether parameter name includes Max/Min
-        match = self.pattern1.match(name_param)
+        match: bool = self.pattern1.match(name_param)
         if match:
             self.flag_no_CL = True
         else:
@@ -249,11 +304,6 @@ class Trend():
             self.date_last = list(date)[len(date) - 1]
 
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
-
-        # if self.ax1 is not None:
-        #    self.ax1.clear()
-        # if self.ax2 is not None:
-        #    self.ax2.clear()
 
         # -----------------------------------------------------------------
         # add first y axis
@@ -332,7 +382,7 @@ class Trend():
     #    plt.figure instance with blank plot frame & parameter name
     # -------------------------------------------------------------------------
     def KeyErrorHandle(self, name_param):
-        msg = 'Oops!  There is no value associate with the parameter name, \'' \
+        msg: str = 'Oops!  There is no value associate with the parameter name, \'' \
               + name_param + '\'.  Please check the Excel macro/sheet.'
         # dialog = wx.MessageDialog(
         #    parent=self.parent,
