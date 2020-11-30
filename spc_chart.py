@@ -120,7 +120,7 @@ class ChartWin(QMainWindow):
         return name_part, name_param
 
     # -------------------------------------------------------------------------
-    #  get_part_param - get PART No & Parameter Name from sheet
+    #  updateTitle - update window title
     #
     #  argument
     #    part  : PART name
