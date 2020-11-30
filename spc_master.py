@@ -149,7 +149,8 @@ class SPCMaster(QMainWindow):
     @Slot()
     def handleRowHeaderDblClick(self, row: int):
         if self.chart is not None:
-            self.chart.destroy()
+            self.chart.close()
+            self.chart.deleteLater()
 
         self.chart = ChartWin(self, self.sheets, self.num_param, row)
 
