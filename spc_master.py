@@ -20,6 +20,7 @@ from PySide2.QtWidgets import (
 )
 from office import ExcelSPC
 from worksheet import SheetMaster
+from spc_chart import ChartWin
 
 
 class SPCMaster(QMainWindow):
@@ -49,7 +50,6 @@ class SPCMaster(QMainWindow):
         self.setWindowIcon(QIcon(self.icon_logo))
         self.setAppTitle()
         self.setGeometry(100, 100, 800, 600)
-        self.show()
 
     # -------------------------------------------------------------------------
     #  initUI - UI initialization
@@ -74,6 +74,8 @@ class SPCMaster(QMainWindow):
         # Status Bar
         self.statusbar: QStatusBar = QStatusBar()
         self.setStatusBar(self.statusbar)
+
+        self.show()
 
     # -------------------------------------------------------------------------
     #  setAppTitle
@@ -124,7 +126,8 @@ class SPCMaster(QMainWindow):
     # -------------------------------------------------------------------------
     def createTabMaster(self):
         # create Master sheet
-        tbl_master: QTableView = SheetMaster(self.sheets)
+        tbl_master: SheetMaster = SheetMaster(self.sheets)
+        self.num_param: int = tbl_master.get_num_param()
         icon_master: QIcon = QIcon(self.icon_book)
 
         # double click event at row header
@@ -145,7 +148,10 @@ class SPCMaster(QMainWindow):
     # -------------------------------------------------------------------------
     @Slot()
     def handleRowHeaderDblClick(self, row: int):
-        print('Row %d is selected' % row)
+        if self.chart is not None:
+            self.chart.destroy()
+
+        self.chart = ChartWin(self, self.sheets, self.num_param, row)
 
     # -------------------------------------------------------------------------
     #  openFile - open file dialog

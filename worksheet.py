@@ -54,7 +54,10 @@ class SheetMaster(QTableView):
         self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 
         # master data frame
-        df: pd.DataFrame = sheets.get_master()
+        self.df: pd.DataFrame = sheets.get_master()
 
         # set table model
-        self.setModel(SPCTableModel(df, sheets.get_header_master()))
+        self.setModel(SPCTableModel(self.df, sheets.get_header_master()))
+
+    def get_num_param(self):
+        return len(self.df)
