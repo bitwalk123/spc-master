@@ -1,7 +1,8 @@
+import datetime
 import numpy as np
 import pandas as pd
 import re
-import matplotlib as mpl
+import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
@@ -49,25 +50,25 @@ class ChartWin(QMainWindow):
     # -------------------------------------------------------------------------
     def initUI(self):
         # Create toolbar
-        toolbar: QToolBar = QToolBar()
+        toolbar = QToolBar()
         self.addToolBar(toolbar)
 
         # Add buttons to toolbar
-        tool_param_before: QToolButton = QToolButton()
-        tool_param_before.setIcon(QIcon(self.icon_before))
-        tool_param_before.setStatusTip('before PARAMETER')
-        tool_param_before.clicked.connect(self.prev_chart)
-        toolbar.addWidget(tool_param_before)
+        btn_before: QToolButton = QToolButton()
+        btn_before.setIcon(QIcon(self.icon_before))
+        btn_before.setStatusTip('goto previous PARAMETER')
+        btn_before.clicked.connect(self.prev_chart)
+        toolbar.addWidget(btn_before)
 
         # Add buttons to toolbar
-        tool_param_after: QToolButton = QToolButton()
-        tool_param_after.setIcon(QIcon(self.icon_after))
-        tool_param_after.setStatusTip('after PARAMETER')
-        tool_param_after.clicked.connect(self.next_chart)
-        toolbar.addWidget(tool_param_after)
+        btn_after: QToolButton = QToolButton()
+        btn_after.setIcon(QIcon(self.icon_after))
+        btn_after.setStatusTip('go to next PARAMETER')
+        btn_after.clicked.connect(self.next_chart)
+        toolbar.addWidget(btn_after)
 
         # Status Bar
-        self.statusbar: QStatusBar = QStatusBar()
+        self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
 
         self.create_chart()
@@ -158,7 +159,7 @@ class ChartWin(QMainWindow):
             'PARAM': param,
         }
         trend: Trend = Trend(self, self.sheets, self.row)
-        figure: mpl.figure.Figure = trend.get(info)
+        figure = trend.get(info)
         canvas: FigureCanvas = FigureCanvas(figure)
 
         return canvas
@@ -191,7 +192,7 @@ class ChartWin(QMainWindow):
     # -------------------------------------------------------------------------
     def prev_chart(self, event: bool):
         if self.row <= 0:
-            self.row = 0
+            self.row: int = 0
             return
 
         self.row -= 1
@@ -218,7 +219,7 @@ class Trend():
     # initial value of instances
     parent = None
     sheets = None
-    row = 0
+    row: int = 0
     ax1 = None
     ax2 = None
 
@@ -261,9 +262,9 @@ class Trend():
 
     def __init__(self, parent: ChartWin, sheets: ExcelSPC, row: int):
         plt.close()
-        self.parent = parent
-        self.sheets = sheets
-        self.row = row
+        self.parent: ChartWin = parent
+        self.sheets: ExcelSPC = sheets
+        self.row: int = row
 
     # -------------------------------------------------------------------------
     #  get - obtain SPC chart
@@ -275,7 +276,7 @@ class Trend():
     #    plt.figure instance with SPC chart
     # -------------------------------------------------------------------------
     def get(self, info: dict):
-        mpl.rcParams['font.family'] = self.font_family
+        matplotlib.rcParams['font.family'] = self.font_family
 
         name_part: str = info['PART']
         name_param: str = info['PARAM']
@@ -283,25 +284,35 @@ class Trend():
         # check whether parameter name includes Max/Min
         match: bool = self.pattern1.match(name_param)
         if match:
-            self.flag_no_CL = True
+            self.flag_no_CL: bool = True
         else:
-            self.flag_no_CL = False
+            self.flag_no_CL: bool = False
 
-        metrics = self.sheets.get_metrics(name_part, name_param)
-        df = self.sheets.get_part(name_part)
-        x = df['Sample']
+        metrics: dict = self.sheets.get_metrics(name_part, name_param)
+        df: pd.DataFrame = self.sheets.get_part(name_part)
+
+        x: pd.Series = df['Sample']
+        if len(x.index) != len(x.unique()):
+            # copy() is for preventing from following warning:
+            # ------------------------------------------------
+            # SettingWithCopyWarning:
+            # A value is trying to be set on a copy of a slice from a DataFrame
+            x_copy: pd.Series = x.copy()
+            for i in x.index:
+                x_copy.loc[i] = i
+            x: pd.Series = x_copy
+
         try:
-            y = df[name_param]
+            y: pd.Series = df[name_param]
         except KeyError:
             return self.KeyErrorHandle(name_param)
 
-        date = df['Date']
-        # print(date[len(date)])
+        date: pd.Series = df['Date']
 
         if len(date) == 0:
             self.date_last = 'n/a'
         else:
-            self.date_last = list(date)[len(date) - 1]
+            self.date_last: datetime = list(date)[len(date) - 1]
 
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
 
@@ -349,26 +360,23 @@ class Trend():
 
         # _/_/_/_/_/_/_/
         # Histric data
-        dataType = 'Historic'
-        color_point = 'gray'
-        self.draw_points(color_point, dataType, df, x, y)
+        data_type: str = 'Historic'
+        color_point: str = 'gray'
+        self.draw_points(color_point, data_type, df, x, y)
 
         # _/_/_/_/_/_/_/
         # Recent data
-        dataType = 'Recent'
-        color_point = 'black'
-        self.draw_points(color_point, dataType, df, x, y)
+        data_type: str = 'Recent'
+        color_point: str = 'black'
+        self.draw_points(color_point, data_type, df, x, y)
 
+        # reflect ax1 limits to ax2 limits
         self.ax2.set_ylim(self.ax1.get_ylim())
 
         # ---------------------------------------------------------------------
         # Label for HORIZONTAL LINE
         # ---------------------------------------------------------------------
         self.add_y_axis_labels(fig, metrics)
-        # fig.canvas.draw();
-
-        # print(self.ax1.get_ylim())
-        # print(self.ax2.get_ylim())
 
         return fig
 
@@ -381,24 +389,16 @@ class Trend():
     #  return
     #    plt.figure instance with blank plot frame & parameter name
     # -------------------------------------------------------------------------
-    def KeyErrorHandle(self, name_param):
+    def KeyErrorHandle(self, name_param: str):
         msg: str = 'Oops!  There is no value associate with the parameter name, \'' \
-              + name_param + '\'.  Please check the Excel macro/sheet.'
-        # dialog = wx.MessageDialog(
-        #    parent=self.parent,
-        #    message=msg,
-        #    caption='Error',
-        #    pos=wx.DefaultPosition,
-        #    style=wx.OK | wx.ICON_ERROR
-        # )
-        # dialog.ShowModal()
-
+                   + name_param + '\'.  Please check the Excel macro/sheet.'
         QMessageBox.critical(self.parent, 'Error', msg)
 
         # return blank figure
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
         fig.add_subplot(111, title=name_param)
         plt.subplots_adjust(left=self.margin_plot_left, right=self.margin_plot_right)
+
         return fig
 
     # -------------------------------------------------------------------------
@@ -426,9 +426,9 @@ class Trend():
     #  return
     #    (none)
     # -------------------------------------------------------------------------
-    def draw_points(self, color, type, df, x, y):
-        x_historic = x[df['Data Type'] == type]
-        y_historic = y[df['Data Type'] == type]
+    def draw_points(self, color: str, type: str, df, x, y):
+        x_historic: pd.Series = x[df['Data Type'] == type]
+        y_historic: pd.Series = y[df['Data Type'] == type]
         self.ax1.scatter(x_historic, y_historic, s=self.size_point, c=color, marker='o', label=type)
 
     # -------------------------------------------------------------------------
@@ -493,13 +493,13 @@ class Trend():
     def violation_one_sided(self, df, metrics, name_param, x, y):
         # OOC check
         if self.flag_no_CL is False:
-            x_ooc = x[(df[name_param] > metrics['UCL']) & (df['Data Type'] == 'Recent')]
-            y_ooc = y[(df[name_param] > metrics['UCL']) & (df['Data Type'] == 'Recent')]
+            x_ooc: pd.Series = x[(df[name_param] > metrics['UCL']) & (df['Data Type'] == 'Recent')]
+            y_ooc: pd.Series = y[(df[name_param] > metrics['UCL']) & (df['Data Type'] == 'Recent')]
             self.draw_circle(self.ax1, x_ooc, y_ooc, self.size_ooc_out, self.size_ooc_in, self.color_ooc_out, self.color_ooc_in)
 
         # OOS check
-        x_oos = x[(df[name_param] > metrics['USL']) & (df['Data Type'] == 'Recent')]
-        y_oos = y[(df[name_param] > metrics['USL']) & (df['Data Type'] == 'Recent')]
+        x_oos: pd.Series = x[(df[name_param] > metrics['USL']) & (df['Data Type'] == 'Recent')]
+        y_oos: pd.Series = y[(df[name_param] > metrics['USL']) & (df['Data Type'] == 'Recent')]
         self.draw_circle(self.ax1, x_oos, y_oos, self.size_oos_out, self.size_oos_in, self.color_oos_out, self.color_oos_in)
 
     # -------------------------------------------------------------------------
@@ -518,13 +518,13 @@ class Trend():
     def violation_two_sided(self, df, metrics, name_param, x, y):
         # OOC check
         if self.flag_no_CL is False:
-            x_ooc = x[((df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])) & (df['Data Type'] == 'Recent')]
-            y_ooc = y[((df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])) & (df['Data Type'] == 'Recent')]
+            x_ooc: pd.Series = x[((df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])) & (df['Data Type'] == 'Recent')]
+            y_ooc: pd.Series = y[((df[name_param] < metrics['LCL']) | (df[name_param] > metrics['UCL'])) & (df['Data Type'] == 'Recent')]
             self.draw_circle(self.ax1, x_ooc, y_ooc, self.size_ooc_out, self.size_ooc_in, self.color_ooc_out, self.color_ooc_in)
 
         # OOS check
-        x_oos = x[((df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])) & (df['Data Type'] == 'Recent')]
-        y_oos = y[((df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])) & (df['Data Type'] == 'Recent')]
+        x_oos: pd.Series = x[((df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])) & (df['Data Type'] == 'Recent')]
+        y_oos: pd.Series = y[((df[name_param] < metrics['LSL']) | (df[name_param] > metrics['USL'])) & (df['Data Type'] == 'Recent')]
         self.draw_circle(self.ax1, x_oos, y_oos, self.size_oos_out, self.size_oos_in, self.color_oos_out, self.color_oos_in)
 
     # -------------------------------------------------------------------------
@@ -557,41 +557,41 @@ class Trend():
     #    (none)
     # -------------------------------------------------------------------------
     def add_y_axis_labels(self, fig, metrics):
-        list_labels_left = []
-        list_labels_right = []
+        list_labels_left: list[str] = []
+        list_labels_right: list[str] = []
         if metrics['Spec Type'] == 'Two-Sided':
             # LEFT
             if self.flag_no_CL is False:
-                labels_left = ['LCL', 'Target', 'UCL']
+                labels_left: list[str] = ['LCL', 'Target', 'UCL']
             else:
-                labels_left = ['Target']
+                labels_left: list[str] = ['Target']
 
             if self.sheets.get_SL_flag(self.row) is False:
                 labels_left.extend(['LSL', 'USL'])
 
             # RIGHT
             if self.flag_no_CL is False:
-                labels_right = ['RLCL', 'Avg', 'RUCL']
+                labels_right: list[str] = ['RLCL', 'Avg', 'RUCL']
             else:
-                labels_right = ['Avg']
+                labels_right: list[str] = ['Avg']
         elif metrics['Spec Type'] == 'One-Sided':
             # LEFT
             if self.flag_no_CL is False:
-                labels_left = ['UCL']
+                labels_left: list[str] = ['UCL']
             else:
-                labels_left = []
+                labels_left: list[str] = []
 
             if self.sheets.get_SL_flag(self.row) is False:
                 labels_left.extend(['USL'])
 
             # RIGHT
             if self.flag_no_CL is False:
-                labels_right = ['Avg', 'RUCL']
+                labels_right: list[str] = ['Avg', 'RUCL']
             else:
-                labels_right = ['Avg']
+                labels_right: list[str] = ['Avg']
         else:
-            labels_left = []
-            labels_right = ['Avg']
+            labels_left: list[str] = []
+            labels_right: list[str] = ['Avg']
 
         # Check whether defined label has number or not
         for label in labels_left:
@@ -621,32 +621,32 @@ class Trend():
             self.add_extra_tick_values(self.ax1, fig, list_labels, metrics)
 
             # Left Axis: extra labels
-            labels = [item.get_text() for item in self.ax1.get_yticklabels()]
-            nformat = self.get_tick_label_format(labels)
-            n = len(labels)
-            m = len(list_labels)
+            labels: list = [item.get_text() for item in self.ax1.get_yticklabels()]
+            nformat: str = self.get_tick_label_format(labels)
+            n: int = len(labels)
+            m: int = len(list_labels)
             for i in range(m):
-                k = n - m + i
-                label_new = list_labels[i]
-                value = metrics[label_new]
+                k: int = n - m + i
+                label_new: str = list_labels[i]
+                value: float = metrics[label_new]
                 labels[k] = label_new + ' = ' + nformat.format(value)
             self.ax1.set_yticklabels(labels)
 
             # Left Axis: color
-            yticklabels = self.ax1.get_yticklabels()
-            n = len(yticklabels)
-            m = len(list_labels)
+            yticklabels: list = self.ax1.get_yticklabels()
+            n: int = len(yticklabels)
+            m: int = len(list_labels)
             for i in range(m):
-                k = n - m + i
-                label = list_labels[i]
+                k: int = n - m + i
+                label: str = list_labels[i]
                 if label == 'USL' or label == 'LSL':
-                    color = self.SL
+                    color: str = self.SL
                 elif label == 'UCL' or label == 'LCL':
-                    color = self.CL
+                    color: str = self.CL
                 elif label == 'Target':
-                    color = self.TG
+                    color: str = self.TG
                 else:
-                    color = 'black'
+                    color: str = 'black'
 
                 yticklabels[k].set_color(color)
 
@@ -669,37 +669,32 @@ class Trend():
             self.add_extra_tick_values(self.ax2, fig, list_labels, metrics)
 
             # Right Axis: labels
-            labels = [item.get_text() for item in self.ax2.get_yticklabels()]
-            nformat = self.get_tick_label_format(labels)
-            n = len(labels)
-            m = len(list_labels)
+            labels: list = [item.get_text() for item in self.ax2.get_yticklabels()]
+            nformat: str = self.get_tick_label_format(labels)
+            n: int = len(labels)
+            m: int = len(list_labels)
             for i in range(m):
-                k = n - m + i
-                label_new = list_labels[i]
-                value = metrics[label_new]
+                k: int = n - m + i
+                label_new: str = list_labels[i]
+                value: float = metrics[label_new]
                 labels[k] = nformat.format(value) + ' = ' + label_new
             self.ax2.set_yticklabels(labels)
 
             # Right Axis: color
-            yticklabels = self.ax2.get_yticklabels()
-            n = len(yticklabels)
-            m = len(list_labels)
+            yticklabels: list = self.ax2.get_yticklabels()
+            n: int = len(yticklabels)
+            m: int = len(list_labels)
             for i in range(m):
-                k = n - m + i
-                label = list_labels[i]
+                k: int = n - m + i
+                label: str = list_labels[i]
                 if label == 'RUCL' or label == 'RLCL':
-                    color = self.RCL
+                    color: str = self.RCL
                 elif label == 'Avg':
-                    color = self.AVG
+                    color: str = self.AVG
                 else:
-                    color = 'black'
+                    color: str = 'black'
 
                 yticklabels[k].set_color(color)
-
-            # set axis
-            # print(self.ax.get_ylim())
-            # self.ax2.set_ylim(self.ax.get_ylim())
-            # print(self.ax2.get_ylim())
 
     # -------------------------------------------------------------------------
     #  add_extra_tick_values
@@ -714,7 +709,7 @@ class Trend():
     #    (none)
     # -------------------------------------------------------------------------
     def add_extra_tick_values(self, ax, fig, list_labels, metrics):
-        extraticks = []
+        extraticks: list = []
         for label in list_labels:
             extraticks.append(metrics[label])
 
@@ -731,15 +726,15 @@ class Trend():
     #  return
     #    nformat - formatted string
     # -------------------------------------------------------------------------
-    def get_tick_label_format(self, labels):
-        digit = 0
+    def get_tick_label_format(self, labels: list) -> str:
+        digit: int = 0
         for label in labels:
-            match = self.pattern2.match(label)
+            match: bool = self.pattern2.match(label)
             if match:
-                n = len(match.group(1))
+                n: int = len(match.group(1))
                 if n > digit:
-                    digit = n
-        nformat = '{:.' + str(digit) + 'f}'
+                    digit: int = n
+        nformat: str = '{:.' + str(digit) + 'f}'
 
         return nformat
 
