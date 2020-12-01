@@ -13,9 +13,9 @@ LICENSE: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
 
 
 IMAGE: powerpoint.png
-ORIGINAL FILENAME: iconfinder_72-powerpoint_4202099.png
-URL: https://www.iconfinder.com/icons/4202099/download/png/24
-AUTHOR: Flatart, Pakisatn
+ORIGINAL FILENAME: iconfinder_logo_brand_brands_logos_powerpoint_2993675.png
+URL: https://www.iconfinder.com/icons/2993675/download/png/128
+AUTHOR: Alpár-Etele Méder
 LICENSE: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
 
 

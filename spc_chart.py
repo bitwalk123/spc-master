@@ -1,15 +1,20 @@
 import datetime
-import numpy as np
-import pandas as pd
-import re
+import math
 import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pathlib
+import re
+import subprocess
+import tempfile
 
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
+    QCheckBox,
     QDockWidget,
     QMainWindow,
     QMessageBox,
@@ -18,7 +23,7 @@ from PySide2.QtWidgets import (
     QToolButton,
 )
 
-from office import ExcelSPC
+from office import ExcelSPC, PowerPoint
 
 
 class ChartWin(QMainWindow):
@@ -33,6 +38,7 @@ class ChartWin(QMainWindow):
     icon_chart: str = 'images/chart.ico'
     icon_before: str = 'images/before.png'
     icon_after: str = 'images/after.png'
+    icon_ppt: str = 'images/powerpoint.png'
 
     def __init__(self, parent: QMainWindow, sheets: ExcelSPC, num_param: int, row: int):
         super().__init__(parent=parent)
@@ -67,6 +73,25 @@ class ChartWin(QMainWindow):
         btn_after.clicked.connect(self.next_chart)
         toolbar.addWidget(btn_after)
 
+        toolbar.addSeparator()
+
+        self.check_update: QCheckBox = QCheckBox('Hide Spec Limit(s)', self)
+        self.checkbox_state()
+        self.check_update.stateChanged.connect(self.update_status)
+        toolbar.addWidget(self.check_update)
+
+        toolbar.addSeparator()
+
+        self.check_all_slides: QCheckBox = QCheckBox('All parameters', self)
+        toolbar.addWidget(self.check_all_slides)
+
+        # PowerPoint
+        but_ppt: QToolButton = QToolButton()
+        but_ppt.setIcon(QIcon(self.icon_ppt))
+        but_ppt.setStatusTip('generate PowerPoint slide(s)')
+        but_ppt.clicked.connect(self.OnPPT)
+        toolbar.addWidget(but_ppt)
+
         # Status Bar
         self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
@@ -74,6 +99,41 @@ class ChartWin(QMainWindow):
         self.create_chart()
 
         self.show()
+
+    # -------------------------------------------------------------------------
+    #  checkbox_state
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def checkbox_state(self):
+        if self.sheets.get_SL_flag(self.row):
+            self.check_update.setCheckState(Qt.Checked)
+        else:
+            self.check_update.setCheckState(Qt.Unchecked)
+
+    # -------------------------------------------------------------------------
+    #  update_status
+    #
+    #  argument
+    #    event :
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def update_status(self, state):
+        sender = self.sender()
+        if sender.checkState() == Qt.Checked:
+            flag_new: bool = True
+        else:
+            flag_new: bool = False
+        flag_old = self.sheets.get_SL_flag(self.row)
+        if flag_new is not flag_old:
+            self.sheets.set_SL_flag(self.row, flag_new)
+            self.create_chart()
 
     # -------------------------------------------------------------------------
     #  create_chart
@@ -208,8 +268,84 @@ class ChartWin(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def update_chart(self):
-        # self.check_update.SetValue(self.sheets.get_SL_flag(self.row))
+        self.checkbox_state()
         self.create_chart()
+
+    # -------------------------------------------------------------------------
+    #  OnPPT
+    # -------------------------------------------------------------------------
+    def OnPPT(self, event):
+        template_path = 'template/template.pptx'
+        image_path = tempfile.NamedTemporaryFile(suffix='.png').name
+        save_path = tempfile.NamedTemporaryFile(suffix='.pptx').name
+
+        # check box is checked?
+        if self.check_all_slides.checkState() == Qt.Checked:
+            # loop fpr all parameters
+            loop = range(self.num_param)
+        else:
+            # This is single loop
+            loop = [self.row]
+
+        for row in loop:
+            # get Parameter Name & PART Number
+            name_part, name_param = self.get_part_param(row)
+            # print(row + 1, name_part, name_param)
+
+            # create PowerPoint file
+            info = {
+                'PART': name_part,
+                'PARAM': name_param,
+                'IMAGE': image_path,
+            }
+
+            # create chart
+            trend = Trend(self, self.sheets, row)
+            figure = trend.get(info)
+
+            dateObj = trend.get_last_date()
+            # print(dateObj)
+            # print(type(dateObj))
+            if dateObj is None:
+                info['Date of Last Lot Received'] = 'n/a'
+            elif type(dateObj) is float:
+                if math.isnan(dateObj):
+                    info['Date of Last Lot Received'] = 'n/a'
+                else:
+                    info['Date of Last Lot Received'] = str(dateObj)
+            elif type(dateObj) is str:
+                info['Date of Last Lot Received'] = dateObj
+            else:
+                info['Date of Last Lot Received'] = dateObj.strftime('%m/%d/%Y')
+
+            # create PNG file of plot
+            figure.savefig(image_path)
+
+            # gen_ppt(template_path, image_path, save_path, info)
+            if self.check_all_slides.checkState() == Qt.Checked and row > 0:
+                template_path = save_path
+
+            ppt_obj = PowerPoint(template_path)
+            ppt_obj.add_slide(self.sheets, info)
+            ppt_obj.save(save_path)
+
+        # open created file
+        self.open_file_with_app(save_path)
+
+    # -------------------------------------------------------------------------
+    #  open_file_with_app
+    #
+    #  argument
+    #    name_file : filename to open with associated application
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def open_file_with_app(self, name_file):
+        link_file = pathlib.PurePath(name_file)
+
+        # Windows Explorer can cover all cases to start application with file
+        subprocess.Popen(['explorer', link_file])
 
 
 # =============================================================================
