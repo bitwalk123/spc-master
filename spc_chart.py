@@ -275,9 +275,9 @@ class ChartWin(QMainWindow):
     #  OnPPT
     # -------------------------------------------------------------------------
     def OnPPT(self, event):
-        template_path = 'template/template.pptx'
-        image_path = tempfile.NamedTemporaryFile(suffix='.png').name
-        save_path = tempfile.NamedTemporaryFile(suffix='.pptx').name
+        template_path: str = 'template/template.pptx'
+        image_path: str = tempfile.NamedTemporaryFile(suffix='.png').name
+        save_path: str = tempfile.NamedTemporaryFile(suffix='.pptx').name
 
         # check box is checked?
         if self.check_all_slides.checkState() == Qt.Checked:
