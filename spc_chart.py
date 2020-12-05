@@ -163,9 +163,10 @@ class ChartWin(QMainWindow):
         self.setCentralWidget(self.canvas)
 
         # DockWidget
-        self.dock: QDockWidget = QDockWidget()
-        #self.dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
-        self.dock.setWidget(NavigationToolbar(self.canvas, self))
+        self.navtoolbar: NavigationToolbar = NavigationToolbar(self.canvas, self)
+        self.dock: QDockWidget = QDockWidget('Navigation Toolbar')
+        self.dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.dock.setWidget(self.navtoolbar)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dock)
 
         # update row selection of 'Master' sheet
