@@ -172,9 +172,11 @@ class ChartWin(QMainWindow):
         # CentralWidget
         self.canvas: FigureCanvas = self.gen_chart(name_part, name_param)
         self.setCentralWidget(self.canvas)
+
         # DockWidget
         self.navtoolbar: NavigationToolbar = NavigationToolbar(self.canvas, self)
-        self.dock: QDockWidget = QDockWidget()
+        self.dock: QDockWidget = QDockWidget('Navigation Toolbar')
+        self.dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.dock.setWidget(self.navtoolbar)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dock)
 
