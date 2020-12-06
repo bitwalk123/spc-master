@@ -40,6 +40,17 @@ class ChartWin(QMainWindow):
     icon_after: str = 'images/after.png'
     icon_ppt: str = 'images/powerpoint.png'
 
+    NavigationToolbar.toolitems = (
+        ('Home', 'Reset original view', 'home', 'home'),
+        #('Back', 'Back to previous view', 'back', 'back'),
+        #('Forward', 'Forward to next view', 'forward', 'forward'),
+        (None, None, None, None),
+        ('Pan', 'Pan axes with left mouse, zoom with right', 'move', 'pan'),
+        ('Zoom', 'Zoom to rectangle', 'zoom_to_rect', 'zoom'),
+        # ('Subplots', 'Configure subplots', 'subplots', 'configure_subplots'),
+        (None, None, None, None),
+         ('Save', 'Save the figure', 'filesave', 'save_figure'),
+    )
     def __init__(self, parent: QMainWindow, sheets: ExcelSPC, num_param: int, row: int):
         super().__init__(parent=parent)
 
