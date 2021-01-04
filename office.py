@@ -273,7 +273,14 @@ class ExcelSPC():
     # -------------------------------------------------------------------------
     def read(self, filename):
         # read specified filename as Excel file including all tabs
-        return pd.read_excel(filename, sheet_name=None)
+        # return pd.read_excel(filename, sheet_name=None)
+
+        df = pd.read_excel(
+            filename,
+            sheet_name=None,
+            engine='openpyxl',
+        )
+        return df
 
 
 # =============================================================================
