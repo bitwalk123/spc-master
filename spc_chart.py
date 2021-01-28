@@ -65,6 +65,12 @@ class ChartWin(QMainWindow):
 
     # -------------------------------------------------------------------------
     #  initUI - UI initialization
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def initUI(self):
         # Create toolbar
@@ -116,7 +122,7 @@ class ChartWin(QMainWindow):
     #  checkbox_state
     #
     #  argument
-    #    event :
+    #    (none)
     #
     #  return
     #    (none)
@@ -131,7 +137,7 @@ class ChartWin(QMainWindow):
     #  update_status
     #
     #  argument
-    #    event :
+    #    state :
     #
     #  return
     #    (none)

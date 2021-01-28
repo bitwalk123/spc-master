@@ -99,7 +99,7 @@ class SPCMaster(QMainWindow):
     #  create tab instances
     #
     #  argument
-    #    sheet :
+    #    (none)
     #
     #  return
     #    (none)
@@ -119,7 +119,7 @@ class SPCMaster(QMainWindow):
     #  createTabMaster - creating 'Master' tab
     #
     #  argument
-    #    sheet : object of Excel sheet
+    #    (none)
     #
     #  return
     #    (none)
@@ -168,6 +168,12 @@ class SPCMaster(QMainWindow):
 
     # -------------------------------------------------------------------------
     #  openFile - open file dialog
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     @Slot()
     def openFile(self):
@@ -197,6 +203,12 @@ class SPCMaster(QMainWindow):
 
     # -------------------------------------------------------------------------
     #  closeEvent
+    #
+    #  argument
+    #    event
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def closeEvent(self, event):
         reply: QMessageBox.StandardButton = QMessageBox.warning(
