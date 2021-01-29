@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pathlib
+import platform
 import re
 import subprocess
+import sys
 import tempfile
 
 from PySide2.QtCore import Qt
@@ -362,10 +364,15 @@ class ChartWin(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def open_file_with_app(self, name_file):
-        link_file = pathlib.PurePath(name_file)
+        path = pathlib.PurePath(name_file)
 
-        # Windows Explorer can cover all cases to start application with file
-        subprocess.Popen(['explorer', link_file])
+        if platform.system() == 'Linux':
+            app_open = 'xdg-open'
+        else:
+            # Windows Explorer can cover all cases to start application with file
+            app_open = 'explorer'
+
+        subprocess.Popen([app_open, path])
 
 
 # =============================================================================
