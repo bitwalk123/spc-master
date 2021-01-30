@@ -28,6 +28,7 @@ from PySide2.QtWidgets import (
 from office import ExcelSPC, PowerPoint
 
 
+# _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
 class ChartWin(QMainWindow):
     parent = None
     sheets = None
@@ -375,9 +376,7 @@ class ChartWin(QMainWindow):
         subprocess.Popen([app_open, path])
 
 
-# =============================================================================
-#  Trend class
-# =============================================================================
+# _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
 class Trend():
     # initial value of instances
     parent = None

@@ -23,6 +23,7 @@ from worksheet import SheetMaster
 from spc_chart import ChartWin
 
 
+# _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
 class SPCMaster(QMainWindow):
     # Application information
     app_name: str = 'SPC Master'
