@@ -52,7 +52,14 @@ class SPCMaster(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
 
     # -------------------------------------------------------------------------
-    #  initUI - UI initialization
+    #  initUI
+    #  UI initialization
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    (none)
     # -------------------------------------------------------------------------
     def initUI(self):
         # Create toolbar
@@ -79,7 +86,7 @@ class SPCMaster(QMainWindow):
 
     # -------------------------------------------------------------------------
     #  setAppTitle
-    #  set application title
+    #  Set application title
     #
     #  argument
     #    filename : filename already read, otherwise None as default
@@ -96,7 +103,7 @@ class SPCMaster(QMainWindow):
 
     # -------------------------------------------------------------------------
     #  createTabs
-    #  create tab instances
+    #  Create tab instances
     #
     #  argument
     #    (none)
@@ -116,7 +123,8 @@ class SPCMaster(QMainWindow):
         self.createTabMaster()
 
     # -------------------------------------------------------------------------
-    #  createTabMaster - creating 'Master' tab
+    #  createTabMaster
+    #  Create 'Master' tab
     #
     #  argument
     #    (none)
@@ -138,10 +146,11 @@ class SPCMaster(QMainWindow):
         self.tabwidget.addTab(self.sheet_master, icon_master, 'Master')
 
     # -------------------------------------------------------------------------
-    #  handleRowHeaderDblClick - event handle for row header double click
+    #  handleRowHeaderDblClick
+    #  Handle event when double clicked row header
     #
     #  argument
-    #    row : row number which is clicked
+    #    row : row number where is clicked
     #
     #  return
     #    (none)
@@ -156,6 +165,7 @@ class SPCMaster(QMainWindow):
 
     # -------------------------------------------------------------------------
     #  setRowSelect
+    #  Set row selection
     #
     #  argument
     #    row : row to be selected
@@ -167,7 +177,8 @@ class SPCMaster(QMainWindow):
         self.sheet_master.selectRow(row)
 
     # -------------------------------------------------------------------------
-    #  openFile - open file dialog
+    #  openFile
+    #  Open file dialog
     #
     #  argument
     #    (none)
@@ -203,6 +214,7 @@ class SPCMaster(QMainWindow):
 
     # -------------------------------------------------------------------------
     #  closeEvent
+    #  Dialog for close confirmation
     #
     #  argument
     #    event
