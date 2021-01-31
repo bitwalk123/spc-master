@@ -27,9 +27,15 @@ from spc_chart import ChartWin
 class SPCMaster(QMainWindow):
     # Application information
     app_name: str = 'SPC Master'
-    app_ver: str = '0.4 (alpha)'
+    app_ver: str = '0.5 (alpha)'
 
-    # initialize instances
+    # initial windows position and size
+    x_init: int = 100
+    y_init: int = 100
+    w_init: int = 800
+    h_init: int = 600
+
+    # initialize instances for main GUI
     tabwidget: QTabWidget = None
     statusbar: QStatusBar = None
     sheets: ExcelSPC = None
@@ -50,7 +56,7 @@ class SPCMaster(QMainWindow):
         self.initUI()
         self.setWindowIcon(QIcon(self.icon_logo))
         self.setAppTitle()
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(self.x_init, self.y_init, self.w_init, self.h_init)
 
     # -------------------------------------------------------------------------
     #  initUI
