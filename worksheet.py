@@ -14,6 +14,7 @@ from PySide2.QtWidgets import (
 )
 
 
+# _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
 class SPCTableModel(QAbstractTableModel):
     def __init__(self, df: pd.DataFrame, col_headers: list):
         QAbstractTableModel.__init__(self)
@@ -44,6 +45,7 @@ class SPCTableModel(QAbstractTableModel):
             return value
 
 
+# _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
 class SheetMaster(QTableView):
     def __init__(self, sheets: ExcelSPC):
         super().__init__()
