@@ -41,7 +41,8 @@ class ChartWin(QMainWindow):
     icon_chart: str = 'images/chart.ico'
     icon_before: str = 'images/go-previous.png'
     icon_after: str = 'images/go-next.png'
-    icon_ppt: str = 'images/x-office-presentation.png'
+    #icon_ppt: str = 'images/x-office-presentation.png'
+    icon_ppt: str = 'images/File-Presentation-icon.png'
 
     NavigationToolbar.toolitems = (
         ('Home', 'Reset original view', 'home', 'home'),

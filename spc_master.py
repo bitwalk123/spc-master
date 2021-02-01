@@ -43,7 +43,8 @@ class SPCMaster(QMainWindow):
 
     # icons
     icon_book: str = 'images/book.png'
-    icon_excel: str = 'images/x-office-spreadsheet.png'
+    #icon_excel: str = 'images/x-office-spreadsheet.png'
+    icon_excel: str = 'images/File-Spreadsheet-icon.png'
     icon_logo: str = 'images/logo.ico'
     icon_warn: str = 'image/warning.png'
 
