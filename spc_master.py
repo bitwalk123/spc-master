@@ -43,6 +43,7 @@ class SPCMaster(QMainWindow):
 
     # icons
     icon_book: str = 'images/book.png'
+    icon_db: str = 'images/database-icon.png'
     #icon_excel: str = 'images/x-office-spreadsheet.png'
     icon_excel: str = 'images/File-Spreadsheet-icon.png'
     icon_logo: str = 'images/logo.ico'
@@ -144,7 +145,8 @@ class SPCMaster(QMainWindow):
         # create Master sheet
         self.sheet_master: SheetMaster = SheetMaster(self.sheets)
         self.num_param: int = self.sheet_master.get_num_param()
-        icon_master: QIcon = QIcon(self.icon_book)
+        #icon_master: QIcon = QIcon(self.icon_book)
+        icon_master: QIcon = QIcon(self.icon_db)
 
         # double click event at row header
         header_row: QHeaderView = self.sheet_master.verticalHeader()
