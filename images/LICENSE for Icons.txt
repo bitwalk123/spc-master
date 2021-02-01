@@ -24,6 +24,17 @@ AUTHOR URL: Favicon of deviantart.comhttp://hopstarter.deviantart.com
 AUTHOR E-mail: hopstarter@gmail.com
 
 
+IMAGE: Apps-Dialog-Shutdown-icon.png
+ORIGINAL FILENAME: Apps-Dialog-Shutdown-icon.png
+URL: https://iconarchive.com/show/flatwoken-icons-by-alecive/Apps-Dialog-Shutdown-icon.html
+AUTHOR: alecive
+LICENSE: CC Attribution-Share Alike 4.0
+Commercial usage: Allowed (Author Arrangement required -> Visit artist website for details).
+AUTHOR URL: https://github.com/alecive
+README_FlatWoken.txt: 
+
+
+
 Attribution 3.0 Unported (CC BY 3.0)
 
 You are free to:

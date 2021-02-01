@@ -3,6 +3,7 @@
 
 import os.path
 import sys
+import types
 from PySide2.QtCore import Slot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
@@ -12,6 +13,7 @@ from PySide2.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QStatusBar,
+    QSizePolicy,
     QTableView,
     QTabWidget,
     QToolBar,
@@ -46,6 +48,7 @@ class SPCMaster(QMainWindow):
     icon_db: str = 'images/database-icon.png'
     #icon_excel: str = 'images/x-office-spreadsheet.png'
     icon_excel: str = 'images/File-Spreadsheet-icon.png'
+    icon_exit: str = 'images/Apps-Dialog-Shutdown-icon.png'
     icon_logo: str = 'images/logo.ico'
     icon_warn: str = 'image/warning.png'
 
@@ -71,17 +74,31 @@ class SPCMaster(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def initUI(self):
+        # --------------
         # Create toolbar
         toolbar: QToolBar = QToolBar()
         self.addToolBar(toolbar)
 
-        # Add buttons to toolbar
+        # Add Excel read buttons to toolbar
         tool_excel: QToolButton = QToolButton()
         tool_excel.setIcon(QIcon(self.icon_excel))
         tool_excel.setStatusTip('Open Excel macro file for SPC')
         tool_excel.clicked.connect(self.openFile)
         toolbar.addWidget(tool_excel)
 
+        # spacer
+        spacer: QWidget = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        toolbar.addWidget(spacer)
+
+        # Add Excel read buttons to toolbar
+        tool_exit: QToolButton = QToolButton()
+        tool_exit.setIcon(QIcon(self.icon_exit))
+        tool_exit.setStatusTip('Exit application')
+        tool_exit.clicked.connect(self.closeEvent)
+        toolbar.addWidget(tool_exit)
+
+        # --------------
         # Tab widget
         self.tabwidget: QTabWidget = QTabWidget()
         self.tabwidget.setTabPosition(QTabWidget.South)
@@ -233,6 +250,12 @@ class SPCMaster(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def closeEvent(self, event):
+        sender = self.sender()
+        if sender is not None:
+            # If Exit button clicked, application ends w/o confirmation
+            QApplication.quit()
+            return
+
         reply: QMessageBox.StandardButton = QMessageBox.warning(
             self,
             'Quit App',
