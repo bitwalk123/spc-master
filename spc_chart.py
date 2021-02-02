@@ -34,6 +34,7 @@ from PySide2.QtWidgets import (
 from office import ExcelSPC, PowerPoint
 from bitwalk import bwidget
 
+
 # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
 class ChartWin(QMainWindow):
     parent = None
@@ -140,6 +141,7 @@ class ChartWin(QMainWindow):
 
         self.show()
 
+    # for combobox testing
     def selectionComboChange(self, i):
         sender = self.sender()
         print("Current index", i, "selection changed ", sender.currentText())
