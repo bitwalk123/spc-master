@@ -46,7 +46,7 @@ class SPCMaster(QMainWindow):
     # icons
     icon_book: str = 'images/book.png'
     icon_db: str = 'images/database-icon.png'
-    #icon_excel: str = 'images/x-office-spreadsheet.png'
+    # icon_excel: str = 'images/x-office-spreadsheet.png'
     icon_excel: str = 'images/File-Spreadsheet-icon.png'
     icon_exit: str = 'images/Apps-Dialog-Shutdown-icon.png'
     icon_logo: str = 'images/logo.ico'
@@ -162,7 +162,7 @@ class SPCMaster(QMainWindow):
         # create Master sheet
         self.sheet_master: SheetMaster = SheetMaster(self.sheets)
         self.num_param: int = self.sheet_master.get_num_param()
-        #icon_master: QIcon = QIcon(self.icon_book)
+        # icon_master: QIcon = QIcon(self.icon_book)
         icon_master: QIcon = QIcon(self.icon_db)
 
         # double click event at row header
@@ -251,10 +251,6 @@ class SPCMaster(QMainWindow):
     # -------------------------------------------------------------------------
     def closeEvent(self, event):
         sender = self.sender()
-        if sender is not None:
-            # If Exit button clicked, application ends w/o confirmation
-            QApplication.quit()
-            return
 
         reply: QMessageBox.StandardButton = QMessageBox.warning(
             self,
@@ -263,10 +259,18 @@ class SPCMaster(QMainWindow):
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
-        if reply == QMessageBox.Yes:
-            event.accept()
+
+        if sender is not None:
+            # Exit button is clicked
+            if reply == QMessageBox.Yes:
+                QApplication.quit()
+            return
         else:
-            event.ignore()
+            # x on thw window is clicked
+            if reply == QMessageBox.Yes:
+                event.accept()
+            else:
+                event.ignore()
 
 
 # =============================================================================

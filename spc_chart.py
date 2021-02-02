@@ -20,9 +20,11 @@ from PySide2.QtWidgets import (
     QDockWidget,
     QMainWindow,
     QMessageBox,
+    QSizePolicy,
     QStatusBar,
     QToolBar,
     QToolButton,
+    QWidget,
 )
 
 from office import ExcelSPC, PowerPoint
@@ -41,7 +43,7 @@ class ChartWin(QMainWindow):
     icon_chart: str = 'images/chart.ico'
     icon_before: str = 'images/go-previous.png'
     icon_after: str = 'images/go-next.png'
-    #icon_ppt: str = 'images/x-office-presentation.png'
+    # icon_ppt: str = 'images/x-office-presentation.png'
     icon_ppt: str = 'images/File-Presentation-icon.png'
 
     NavigationToolbar.toolitems = (
@@ -101,6 +103,11 @@ class ChartWin(QMainWindow):
         self.checkbox_state()
         self.check_update.stateChanged.connect(self.update_status)
         toolbar.addWidget(self.check_update)
+
+        # spacer
+        spacer: QWidget = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        toolbar.addWidget(spacer)
 
         toolbar.addSeparator()
 
