@@ -17,7 +17,11 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDockWidget,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
     QMainWindow,
     QMessageBox,
     QSizePolicy,
@@ -109,6 +113,21 @@ class ChartWin(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         toolbar.addWidget(spacer)
 
+        # PowerPoint format
+        frame: QFrame = QFrame()
+        #frame.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+        frame.setFrameStyle(QFrame.StyledPanel)
+        hbox = QHBoxLayout()
+
+        lab = QLabel('PPT Format', self)
+        hbox.addWidget(lab)
+        combo = QComboBox(self)
+        combo.addItems(['Default'])
+        combo.currentIndexChanged.connect(self.selectionComboChange)
+        hbox.addWidget(combo)
+        frame.setLayout(hbox)
+        toolbar.addWidget(frame)
+
         toolbar.addSeparator()
 
         self.check_all_slides: QCheckBox = QCheckBox('All parameters', self)
@@ -128,6 +147,10 @@ class ChartWin(QMainWindow):
         self.create_chart()
 
         self.show()
+
+    def selectionComboChange(self, i):
+        sender = self.sender()
+        print("Current index", i, "selection changed ", sender.currentText())
 
     # -------------------------------------------------------------------------
     #  checkbox_state
