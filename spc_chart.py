@@ -17,11 +17,7 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
     QCheckBox,
-    QComboBox,
     QDockWidget,
-    QFrame,
-    QHBoxLayout,
-    QLabel,
     QMainWindow,
     QMessageBox,
     QSizePolicy,
