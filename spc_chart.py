@@ -32,7 +32,7 @@ from PySide2.QtWidgets import (
 )
 
 from office import ExcelSPC, PowerPoint
-
+from bitwalk import bwidget
 
 # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
 class ChartWin(QMainWindow):
@@ -114,18 +114,10 @@ class ChartWin(QMainWindow):
         toolbar.addWidget(spacer)
 
         # PowerPoint format
-        frame: QFrame = QFrame()
-        #frame.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
-        frame.setFrameStyle(QFrame.StyledPanel)
-        hbox = QHBoxLayout()
-
-        lab = QLabel('PPT Format', self)
-        hbox.addWidget(lab)
-        combo = QComboBox(self)
-        combo.addItems(['Default'])
-        combo.currentIndexChanged.connect(self.selectionComboChange)
-        hbox.addWidget(combo)
-        frame.setLayout(hbox)
+        frame = bwidget.BComboBox(self)
+        frame.setText('PPT Format')
+        frame.addItems(['Default', 'Custom'])
+        frame.currentIndexChanged(self.selectionComboChange)
         toolbar.addWidget(frame)
 
         toolbar.addSeparator()
