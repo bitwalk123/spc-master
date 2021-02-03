@@ -80,7 +80,8 @@ class ChartWin(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def initUI(self):
-        # Create toolbar
+        # ----------------
+        #  Create toolbar
         toolbar = QToolBar()
         self.addToolBar(toolbar)
 
@@ -105,17 +106,17 @@ class ChartWin(QMainWindow):
         self.check_update.stateChanged.connect(self.update_status)
         toolbar.addWidget(self.check_update)
 
-        # spacer
+        # spacer to expand
         spacer: QWidget = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         toolbar.addWidget(spacer)
 
-        # PowerPoint format
-        frame = bwidget.BComboBox(self)
-        frame.setText('PPT Format')
-        frame.addItems(['Default', 'Custom'])
-        frame.currentIndexChanged(self.selectionComboChange)
-        toolbar.addWidget(frame)
+        # ComboBox to choose PowerPoint format
+        self.ppt_format = bwidget.BComboBox(self)
+        self.ppt_format.setText('PPT Format')
+        self.ppt_format.addItems(['Default', 'Custom'])
+        self.ppt_format.currentIndexChanged(self.selectionComboChange)
+        toolbar.addWidget(self.ppt_format)
 
         toolbar.addSeparator()
 
@@ -129,7 +130,8 @@ class ChartWin(QMainWindow):
         but_ppt.clicked.connect(self.OnPPT)
         toolbar.addWidget(but_ppt)
 
-        # Status Bar
+        # ------------
+        #  Status Bar
         self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
 
