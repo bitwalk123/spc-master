@@ -87,6 +87,10 @@ class ExcelSPC():
         # check if 'Master' tab exists
         if 'Master' in sheets.keys():
             if len(self.sheets['Master'].columns) != len(self.header_master):
+                # TODO
+                # need to identify extra empty column is added unintentionally
+                print(self.sheets['Master'].columns)
+                print(self.header_master)
                 return False
             else:
                 self.sheets['Master'].columns = self.header_master
