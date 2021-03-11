@@ -24,6 +24,9 @@ class ExcelSPC():
                      'Recent Std Dev', 'Cpk for All Points', 'PPM for All Points',
                      'Cpk for Historic & Recent Points', 'PPM for Historic & Recent Points']
 
+    # Regular Expression
+    pattern: str = re.compile(r'Unnamed:\s[0-9]+')  # check Unnamed column
+
     def __init__(self, filename: str):
         self.filename: str = filename
         self.sheets: dict = self.read(filename)
@@ -90,10 +93,19 @@ class ExcelSPC():
                 self.sheets['Master'].columns = self.header_master
                 return True
             else:
-                # TODO
-                # need to identify extra empty column is added unintentionally
-                print(self.sheets['Master'].columns)
-                print(self.header_master)
+                # if extra column is Unnamed column, or just empty column, these columns are just accepted
+                if len(self.sheets['Master'].columns) > len(self.header_master):
+                    header_master_new = self.header_master
+                    for col in range(len(self.header_master), len(self.sheets['Master'].columns)):
+                        # check Unnamed column
+                        match: bool = self.pattern.match(self.sheets['Master'].columns[col])
+                        if not match:
+                            return False # if the column is not Unnamed, this is treadted as wrong format
+                        header_master_new.append(self.sheets['Master'].columns[col])
+                    # treat Unnamed column is accepted column
+                    self.sheets['Master'].columns = header_master_new
+                    return True
+
                 return False
         else:
             return False
