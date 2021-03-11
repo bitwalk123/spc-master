@@ -440,7 +440,8 @@ class Trend():
 
     # Regular Expression
     pattern1: str = re.compile(r'.*_(Max|Min)')  # check whether parameter name includes Max/Min
-    pattern2: str = re.compile(r'.*\.(.*)')  # ___ extract right side from floating point in mumber
+    pattern2: str = re.compile(r'.*_(Std)')  # check whether parameter name includes Std
+    pattern3: str = re.compile(r'.*\.(.*)')  # ___ extract right side from floating point in mumber
 
     flag_no_CL: bool = False
     date_last = None
@@ -515,6 +516,10 @@ class Trend():
             self.axhline_two_sided(metrics)
         elif metrics['Spec Type'] == 'One-Sided':
             self.axhline_one_sided(metrics)
+        else:
+            match: bool = self.pattern2.match(name_param)
+            if match:
+                self.axhline_one_sided(metrics)
 
         # Avg
         if not np.isnan(metrics['Avg']):
@@ -914,7 +919,7 @@ class Trend():
     def get_tick_label_format(self, labels: list) -> str:
         digit: int = 0
         for label in labels:
-            match: bool = self.pattern2.match(label)
+            match: bool = self.pattern3.match(label)
             if match:
                 n: int = len(match.group(1))
                 if n > digit:
