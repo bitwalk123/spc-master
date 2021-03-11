@@ -100,9 +100,9 @@ class ExcelSPC():
                         # check Unnamed column
                         match: bool = self.pattern.match(self.sheets['Master'].columns[col])
                         if not match:
-                            return False # if the column is not Unnamed, this is treadted as wrong format
+                            return False # if the column is not Unnamed, this is treadted as invallid format
                         header_master_new.append(self.sheets['Master'].columns[col])
-                    # treat Unnamed column is accepted column
+                    # treat Unnamed column is valid column
                     self.sheets['Master'].columns = header_master_new
                     return True
 
