@@ -517,6 +517,7 @@ class Trend():
         elif metrics['Spec Type'] == 'One-Sided':
             self.axhline_one_sided(metrics)
         else:
+            # treat name_param includes '_Std' as 'One-Sided'
             match: bool = self.pattern2.match(name_param)
             if match:
                 self.axhline_one_sided(metrics)
@@ -545,6 +546,11 @@ class Trend():
             self.violation_two_sided(df, metrics, name_param, x, y)
         elif metrics['Spec Type'] == 'One-Sided':
             self.violation_one_sided(df, metrics, name_param, x, y)
+        else:
+            # treat name_param includes '_Std' as 'One-Sided'
+            match: bool = self.pattern2.match(name_param)
+            if match:
+                self.violation_one_sided(df, metrics, name_param, x, y)
 
         # DATA POINTS
 
