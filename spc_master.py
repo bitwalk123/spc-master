@@ -21,6 +21,7 @@ from PySide2.QtWidgets import (
     QToolButton,
     QWidget,
 )
+from database import SqlDB
 from office import ExcelSPC
 from worksheet import SheetMaster
 from spc_chart import ChartWin
@@ -30,7 +31,7 @@ from spc_chart import ChartWin
 class SPCMaster(QMainWindow):
     # Application information
     app_name: str = 'SPC Master'
-    app_ver: str = '0.5 (alpha)'
+    app_ver: str = '0.6 (alpha)'
 
     # initial windows position and size
     x_init: int = 100
@@ -43,6 +44,7 @@ class SPCMaster(QMainWindow):
     statusbar: QStatusBar = None
     sheets: ExcelSPC = None
     chart = None
+    db = None
 
     # icons
     icon_book: str = 'images/book.png'
@@ -83,11 +85,18 @@ class SPCMaster(QMainWindow):
         # Config for Database
         config_db = self.config['Database']
         dbname = config_db['DBNAME']
+
         if len(dbname) == 0:
             print('Empty!')
+            pass
+        elif os.path.exists(dbname):
+            # make SqlDB instance
+            self.db = SqlDB(dbname)
         else:
-            print(dbname)
-
+            # delete dbname in config file
+            self.config.set('Database', 'DBNAME', '')
+            with open(self.confFile, 'w') as file:
+                self.config.write(file)
 
     # -------------------------------------------------------------------------
     #  initUI
@@ -116,6 +125,13 @@ class SPCMaster(QMainWindow):
         spacer: QWidget = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         toolbar.addWidget(spacer)
+
+        # Add Excel read buttons to toolbar
+        tool_db: QToolButton = QToolButton()
+        tool_db.setIcon(QIcon(self.icon_db))
+        tool_db.setStatusTip('DB setting')
+        #tool_db.clicked.connect(self.closeEvent)
+        toolbar.addWidget(tool_db)
 
         # Add Excel read buttons to toolbar
         tool_exit: QToolButton = QToolButton()
