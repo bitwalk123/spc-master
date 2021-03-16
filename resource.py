@@ -9,5 +9,6 @@ class Icons():
     DB: str = 'images/database-icon.png'
     EXCEL: str = 'images/File-Spreadsheet-icon.png'
     EXIT: str = 'images/Apps-Dialog-Shutdown-icon.png'
+    FOLDER: str = 'images/iconfinder_Folder_1891015.png'
     LOGO: str = 'images/logo.ico'
     WARN: str = 'images/warning.png'

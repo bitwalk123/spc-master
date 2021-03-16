@@ -34,6 +34,15 @@ AUTHOR URL: https://github.com/alecive
 README_FlatWoken.txt: 
 
 
+IMAGE: iconfinder_Folder_1891015.png
+ORIGINAL FILENAME: iconfinder_Folder_1891015.png
+URL: https://www.iconfinder.com/icons/1891015/album_binder_circle_folder_portfolio_record_icon
+AUTHOR: Julia Osadcha
+LICENSE:
+Commercial usage: Free for commercial use
+AUTHOR URL: https://www.iconfinder.com/Juliia_Os
+
+
 
 Attribution 3.0 Unported (CC BY 3.0)
 
