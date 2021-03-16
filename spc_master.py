@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import configparser
 import os.path
 import sys
 import types
@@ -55,13 +56,38 @@ class SPCMaster(QMainWindow):
     # filter for file extentions to read
     filters: str = 'Excel file (*.xlsx *.xlsm);; All (*.*)'
 
+    # configuraion file
+    confFile: str = 'spc_master.ini'
+    config: configparser.ConfigParser = None
+
     def __init__(self):
         super().__init__()
+
+        # CONFIGURATION FILE READ
+        self.config = configparser.ConfigParser()
+        self.config.read(self.confFile, 'UTF-8')
+        self.initDB()
 
         self.initUI()
         self.setWindowIcon(QIcon(self.icon_logo))
         self.setAppTitle()
         self.setGeometry(self.x_init, self.y_init, self.w_init, self.h_init)
+
+    # -------------------------------------------------------------------------
+    #  initDB
+    # -------------------------------------------------------------------------
+    def initDB(self):
+        # ---------------------------------------------------------------------
+        #  DATABASE CONNECTION
+        # ---------------------------------------------------------------------
+        # Config for Database
+        config_db = self.config['Database']
+        dbname = config_db['DBNAME']
+        if len(dbname) == 0:
+            print('Empty!')
+        else:
+            print(dbname)
+
 
     # -------------------------------------------------------------------------
     #  initUI
