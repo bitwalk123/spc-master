@@ -87,6 +87,7 @@ class SPCMaster(QMainWindow):
         dbname = config_db['DBNAME']
 
         if len(dbname) == 0:
+            # empty value
             print('Empty!')
             pass
         elif os.path.exists(dbname):
