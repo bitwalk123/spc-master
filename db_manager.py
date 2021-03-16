@@ -20,12 +20,12 @@ class DBManWin(QMainWindow):
     parent = None
     db = None
 
-    def __init__(self, parent: QMainWindow, db):
+    def __init__(self, parent: QMainWindow):
         super().__init__(parent=parent)
         self.icons = Icons()
 
         self.parent = parent
-        self.db = db
+        self.db = parent.db
 
         self.initUI()
 
