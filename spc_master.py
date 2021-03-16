@@ -4,7 +4,6 @@
 import configparser
 import os.path
 import sys
-import types
 from PySide2.QtCore import Slot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
@@ -15,16 +14,17 @@ from PySide2.QtWidgets import (
     QMessageBox,
     QStatusBar,
     QSizePolicy,
-    QTableView,
     QTabWidget,
     QToolBar,
     QToolButton,
     QWidget,
 )
 from database import SqlDB
+from db_manager import DBManWin
 from office import ExcelSPC
-from worksheet import SheetMaster
+from resource import Icons
 from spc_chart import ChartWin
+from worksheet import SheetMaster
 
 
 # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
@@ -46,15 +46,6 @@ class SPCMaster(QMainWindow):
     chart = None
     db = None
 
-    # icons
-    icon_book: str = 'images/book.png'
-    icon_db: str = 'images/database-icon.png'
-    # icon_excel: str = 'images/x-office-spreadsheet.png'
-    icon_excel: str = 'images/File-Spreadsheet-icon.png'
-    icon_exit: str = 'images/Apps-Dialog-Shutdown-icon.png'
-    icon_logo: str = 'images/logo.ico'
-    icon_warn: str = 'image/warning.png'
-
     # filter for file extentions to read
     filters: str = 'Excel file (*.xlsx *.xlsm);; All (*.*)'
 
@@ -64,6 +55,7 @@ class SPCMaster(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.icons = Icons()
 
         # CONFIGURATION FILE READ
         self.config = configparser.ConfigParser()
@@ -71,7 +63,7 @@ class SPCMaster(QMainWindow):
         self.initDB()
 
         self.initUI()
-        self.setWindowIcon(QIcon(self.icon_logo))
+        self.setWindowIcon(QIcon(self.icons.LOGO))
         self.setAppTitle()
         self.setGeometry(self.x_init, self.y_init, self.w_init, self.h_init)
 
@@ -117,7 +109,7 @@ class SPCMaster(QMainWindow):
 
         # Add Excel read buttons to toolbar
         tool_excel: QToolButton = QToolButton()
-        tool_excel.setIcon(QIcon(self.icon_excel))
+        tool_excel.setIcon(QIcon(self.icons.EXCEL))
         tool_excel.setStatusTip('Open Excel macro file for SPC')
         tool_excel.clicked.connect(self.openFile)
         toolbar.addWidget(tool_excel)
@@ -129,14 +121,14 @@ class SPCMaster(QMainWindow):
 
         # Add Excel read buttons to toolbar
         tool_db: QToolButton = QToolButton()
-        tool_db.setIcon(QIcon(self.icon_db))
+        tool_db.setIcon(QIcon(self.icons.DB))
         tool_db.setStatusTip('DB setting')
-        #tool_db.clicked.connect(self.closeEvent)
+        tool_db.clicked.connect(self.dbMan)
         toolbar.addWidget(tool_db)
 
         # Add Excel read buttons to toolbar
         tool_exit: QToolButton = QToolButton()
-        tool_exit.setIcon(QIcon(self.icon_exit))
+        tool_exit.setIcon(QIcon(self.icons.EXIT))
         tool_exit.setStatusTip('Exit application')
         tool_exit.clicked.connect(self.closeEvent)
         toolbar.addWidget(tool_exit)
@@ -205,8 +197,7 @@ class SPCMaster(QMainWindow):
         # create Master sheet
         self.sheet_master: SheetMaster = SheetMaster(self.sheets)
         self.num_param: int = self.sheet_master.get_num_param()
-        # icon_master: QIcon = QIcon(self.icon_book)
-        icon_master: QIcon = QIcon(self.icon_db)
+        icon_master: QIcon = QIcon(self.icons.DB)
 
         # double click event at row header
         header_row: QHeaderView = self.sheet_master.verticalHeader()
@@ -281,6 +272,19 @@ class SPCMaster(QMainWindow):
 
         # create new tab
         self.createTabs()
+
+    # -------------------------------------------------------------------------
+    #  dbMan
+    #  database manager
+    #
+    #  argument
+    #    event
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def dbMan(self, event):
+        self.db_man =DBManWin(self, self.db)
 
     # -------------------------------------------------------------------------
     #  closeEvent

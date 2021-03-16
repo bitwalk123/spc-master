@@ -4,7 +4,7 @@ import sqlite3
 
 
 # =============================================================================
-#  SqlDB - handle Database
+#  SqlDB - handle Database for SPC Master
 # =============================================================================
 class SqlDB():
     # SQLite database file name
