@@ -252,6 +252,7 @@ class SPCMaster(QMainWindow):
         # file selection dialog
         dialog: QFileDialog = QFileDialog()
         dialog.setNameFilter(self.filters)
+
         if not dialog.exec_():
             return
 
@@ -311,9 +312,8 @@ class SPCMaster(QMainWindow):
             # Exit button is clicked
             if reply == QMessageBox.Yes:
                 QApplication.quit()
-            return
         else:
-            # x on thw window is clicked
+            # x on the window is clicked
             if reply == QMessageBox.Yes:
                 event.accept()
             else:

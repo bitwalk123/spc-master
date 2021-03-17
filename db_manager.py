@@ -117,6 +117,7 @@ class DBManWin(QMainWindow):
         dialog: QFileDialog = QFileDialog()
         filters: str = 'SQLite file (*.sqlite *.sqlite3);; All (*.*)'
         dialog.setNameFilter(filters)
+
         if not dialog.exec_():
             return
 
@@ -161,7 +162,7 @@ class DBManWin(QMainWindow):
             if reply == QMessageBox.Yes:
                 self.destroy()
         else:
-            # x on thw window is clicked
+            # x on the window is clicked
             if reply == QMessageBox.Yes:
                 event.accept()
             else:
