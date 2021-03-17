@@ -6,6 +6,7 @@
 # =============================================================================
 class Icons():
     BOOK: str = 'images/book.png'
+    CLOSE: str = 'images/iconfinder_Close_1891023.png'
     DB: str = 'images/database-icon.png'
     EXCEL: str = 'images/File-Spreadsheet-icon.png'
     EXIT: str = 'images/Apps-Dialog-Shutdown-icon.png'
