@@ -77,6 +77,18 @@ class ExcelSPC():
         return self.SL_flag[row]
 
     # -------------------------------------------------------------------------
+    #  get_filename
+    #
+    #  argument
+    #    row
+    #
+    #  return
+    #    str: self.filename
+    # -------------------------------------------------------------------------
+    def get_filename(self) -> str:
+        return self.filename
+
+    # -------------------------------------------------------------------------
     #  check_valid_sheet
     #  check if read file (sheets) has 'Master' tab
     #
