@@ -7,6 +7,7 @@ from PySide2.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QSizePolicy,
     QStatusBar,
@@ -61,7 +62,7 @@ class DBManWin(QMainWindow):
         tool_close: QToolButton = QToolButton()
         tool_close.setIcon(QIcon(self.icons.CLOSE))
         tool_close.setStatusTip('close this window')
-        # tool_db.clicked.connect(self.dbMan)
+        tool_close.clicked.connect(self.closeEvent)
         toolbar.addWidget(tool_close)
 
         base = QWidget()
@@ -133,3 +134,35 @@ class DBManWin(QMainWindow):
                 self.config.write(file)
 
         ent.setText(dbname)
+
+    # -------------------------------------------------------------------------
+    #  closeEvent
+    #  Dialog for close confirmation
+    #
+    #  argument
+    #    event
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def closeEvent(self, event):
+        sender = self.sender()
+
+        reply: QMessageBox.StandardButton = QMessageBox.warning(
+            self,
+            'Close this Window',
+            'Are you sure you want to close?',
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if sender is not None:
+            # Exit button is clicked
+            if reply == QMessageBox.Yes:
+                self.destroy()
+        else:
+            # x on thw window is clicked
+            if reply == QMessageBox.Yes:
+                event.accept()
+            else:
+                event.ignore()
