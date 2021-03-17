@@ -132,11 +132,12 @@ class DBManWin(QMainWindow):
         lab_name_supplier.setStyleSheet("QLabel {font-size:10pt; padding: 0 2px;}")
         lab_name_supplier.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        ent_name_supplier = QComboBox()
-        ent_name_supplier.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        combo_name_supplier = QComboBox()
+        self.add_supplier_list_to_combo(combo_name_supplier)
+        combo_name_supplier.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         grid.addWidget(lab_name_supplier, row, 0)
-        grid.addWidget(ent_name_supplier, row, 1)
+        grid.addWidget(combo_name_supplier, row, 1)
 
         row += 1
 
@@ -145,6 +146,26 @@ class DBManWin(QMainWindow):
         self.setStatusBar(self.statusbar)
 
         self.show()
+
+    # -------------------------------------------------------------------------
+    #  add_supplier_list_to_combo
+    #  add supplier list to specified combobox
+    #
+    #  argument
+    #    combo: QComboBox  instance of QComboBox
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def add_supplier_list_to_combo(self, combo: QComboBox):
+        # clear QComboBox
+        combo.clear()
+        combo.clearEditText()
+        # DB Query and update QConboBox
+        sql = "SELECT name_supplier_short FROM supplier;"
+        out = self.db.get(sql)
+        for supplier in out:
+            combo.addItem(supplier[0])
 
     # -------------------------------------------------------------------------
     #  openFile
