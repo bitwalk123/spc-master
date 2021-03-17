@@ -2,6 +2,7 @@ import os.path
 from PySide2.QtCore import Slot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
+    QComboBox,
     QFileDialog,
     QGridLayout,
     QLabel,
@@ -9,8 +10,10 @@ from PySide2.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QStatusBar,
+    QTabWidget,
     QToolBar,
     QToolButton,
     QWidget,
@@ -37,6 +40,8 @@ class DBManWin(QMainWindow):
         self.confFile = parent.confFile
 
         self.initUI()
+        self.setWindowIcon(QIcon(self.icons.DB))
+        self.setWindowTitle('DB Manager')
 
     # -------------------------------------------------------------------------
     #  initUI - UI initialization
@@ -65,15 +70,21 @@ class DBManWin(QMainWindow):
         tool_close.clicked.connect(self.closeEvent)
         toolbar.addWidget(tool_close)
 
+        area = QScrollArea()
+        area.setWidgetResizable(True)
+        self.setCentralWidget(area)
+
         base = QWidget()
         base.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.setCentralWidget(base)
+        area.setWidget(base)
+
         grid = QGridLayout()
         base.setLayout(grid)
+
         row = 0
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-        # DB Label
+        # SQLite file
         lab_name_db = QLabel('SQLite file')
         lab_name_db.setStyleSheet("QLabel {font-size:10pt; padding: 0 2px;}")
         lab_name_db.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -87,11 +98,45 @@ class DBManWin(QMainWindow):
         but_name_db = QPushButton()
         but_name_db.setIcon(QIcon(self.icons.FOLDER))
         but_name_db.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        but_name_db.setStatusTip('select SQLite file')
         but_name_db.clicked.connect(lambda: self.openFile(ent_name_db))
 
         grid.addWidget(lab_name_db, row, 0)
         grid.addWidget(ent_name_db, row, 1)
         grid.addWidget(but_name_db, row, 2)
+
+        row += 1
+
+        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
+        # Excel macro file
+        lab_name_excel = QLabel('Excel macro file')
+        lab_name_excel.setStyleSheet("QLabel {font-size:10pt; padding: 0 2px;}")
+        lab_name_excel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        ent_name_excel = QLineEdit()
+        if self.parent.sheets is not None:
+            filename = self.parent.sheets.get_filename()
+        else:
+            filename = ''
+        ent_name_excel.setText(filename)
+        ent_name_excel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        grid.addWidget(lab_name_excel, row, 0)
+        grid.addWidget(ent_name_excel, row, 1)
+
+        row += 1
+
+        # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
+        # Supplier List
+        lab_name_supplier = QLabel('Supplier')
+        lab_name_supplier.setStyleSheet("QLabel {font-size:10pt; padding: 0 2px;}")
+        lab_name_supplier.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        ent_name_supplier = QComboBox()
+        ent_name_supplier.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        grid.addWidget(lab_name_supplier, row, 0)
+        grid.addWidget(ent_name_supplier, row, 1)
 
         row += 1
 
