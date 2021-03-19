@@ -1,4 +1,5 @@
 import os.path
+import re
 from PySide2.QtCore import Slot
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import (
@@ -28,6 +29,12 @@ class DBManWin(QMainWindow):
     db = None
     config = None
     confFile = None
+
+    w_init: int = 600
+    h_init: int = 200
+
+    # Regular Expression
+    pattern1: str = re.compile(r'([a-zA-Z0-9\s]+).*SPC.*')
 
     def __init__(self, parent: QMainWindow):
         super().__init__(parent=parent)
@@ -145,6 +152,7 @@ class DBManWin(QMainWindow):
         self.statusbar: QStatusBar = QStatusBar()
         self.setStatusBar(self.statusbar)
 
+        self.resize(self.w_init, self.h_init)
         self.show()
 
     # -------------------------------------------------------------------------
@@ -167,9 +175,26 @@ class DBManWin(QMainWindow):
         for supplier in out:
             combo.addItem(supplier[0])
 
+        name = self.get_supplier_name()
+        index = combo.findText(name)
+        if index > 0:
+            combo.setCurrentIndex(index)
+
+    def get_supplier_name(self):
+        if self.parent.sheets is None:
+            return 'Unknown'
+        else:
+            name_excel = os.path.basename(self.parent.sheets.get_filename())
+
+        print(name_excel)
+        match: bool = self.pattern1.match(name_excel)
+        if match:
+            print(match.group(1))
+            return match.group(1).strip().capitalize()
+
     # -------------------------------------------------------------------------
     #  openFile
-    #  Open file dialog
+    #  Open file dialog for selecting / opening SQLite file
     #
     #  argument
     #    (none)
