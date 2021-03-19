@@ -27,6 +27,7 @@ from resource import Icons
 class DBManWin(QMainWindow):
     parent = None
     db = None
+    flag_db = False
     config = None
     confFile = None
 
@@ -123,8 +124,11 @@ class DBManWin(QMainWindow):
         ent_name_excel = QLineEdit()
         if self.parent.sheets is not None:
             filename = self.parent.sheets.get_filename()
+            self.flag_db = True
         else:
             filename = ''
+            self.flag_db = False
+
         ent_name_excel.setText(filename)
         ent_name_excel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -142,9 +146,17 @@ class DBManWin(QMainWindow):
         combo_name_supplier = QComboBox()
         self.add_supplier_list_to_combo(combo_name_supplier)
         combo_name_supplier.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        combo_name_supplier.setStyleSheet("QComboBox:disabled {color:black; background-color:white;}");
+
+        but_db_add = QPushButton()
+        but_db_add.setIcon(QIcon(self.icons.DBADD))
+        but_db_add.setEnabled(self.flag_db)
+        but_db_add.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        but_db_add.setStatusTip('add Excel data to database')
 
         grid.addWidget(lab_name_supplier, row, 0)
         grid.addWidget(combo_name_supplier, row, 1)
+        grid.addWidget(but_db_add, row, 2)
 
         row += 1
 
@@ -177,9 +189,22 @@ class DBManWin(QMainWindow):
 
         name = self.get_supplier_name()
         index = combo.findText(name)
-        if index > 0:
+        if index >= 0:
             combo.setCurrentIndex(index)
+            combo.setEnabled(False)
+        else:
+            combo.setEnabled(True)
 
+    # -------------------------------------------------------------------------
+    #  get_supplier_name
+    #  get supplier name from Excel filename
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    Supplier name
+    # -------------------------------------------------------------------------
     def get_supplier_name(self):
         if self.parent.sheets is None:
             return 'Unknown'
@@ -193,7 +218,7 @@ class DBManWin(QMainWindow):
 
             print(name)
             # exception
-            if name == 'Ferrotech':
+            if name == 'FerroTech':
                 return 'Ferrotec'
 
             return name

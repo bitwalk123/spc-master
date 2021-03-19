@@ -9,6 +9,7 @@ class Icons():
     CLOSE: str = 'images/close.png'
     CHART: str = 'images/chart.png'
     DB: str = 'images/database.png'
+    DBADD: str = 'images/database_add.png'
     EXCEL: str = 'images/excel.png'
     EXIT: str = 'images/exit.png'
     FOLDER: str = 'images/folder.png'
