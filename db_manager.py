@@ -189,8 +189,14 @@ class DBManWin(QMainWindow):
         print(name_excel)
         match: bool = self.pattern1.match(name_excel)
         if match:
-            print(match.group(1))
-            return match.group(1).strip().capitalize()
+            name = match.group(1).strip()
+
+            print(name)
+            # exception
+            if name == 'Ferrotech':
+                return 'Ferrotec'
+
+            return name
 
     # -------------------------------------------------------------------------
     #  openFile

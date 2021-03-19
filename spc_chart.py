@@ -29,6 +29,7 @@ from PySide2.QtWidgets import (
 
 from office import ExcelSPC, PowerPoint
 from bitwalk import bwidget
+from resource import Icons
 
 
 # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
@@ -39,13 +40,6 @@ class ChartWin(QMainWindow):
     row = 0
 
     canvas = None
-
-    # icons
-    icon_chart: str = 'images/chart.ico'
-    icon_before: str = 'images/go-previous.png'
-    icon_after: str = 'images/go-next.png'
-    # icon_ppt: str = 'images/x-office-presentation.png'
-    icon_ppt: str = 'images/File-Presentation-icon.png'
 
     NavigationToolbar.toolitems = (
         ('Home', 'Reset original view', 'home', 'home'),
@@ -61,6 +55,7 @@ class ChartWin(QMainWindow):
 
     def __init__(self, parent: QMainWindow, sheets: ExcelSPC, num_param: int, row: int):
         super().__init__(parent=parent)
+        self.icons = Icons()
 
         self.parent = parent
         self.sheets = sheets
@@ -68,7 +63,7 @@ class ChartWin(QMainWindow):
         self.row = row
 
         self.initUI()
-        self.setWindowIcon(QIcon(self.icon_chart))
+        self.setWindowIcon(QIcon(self.icons.CHART))
 
     # -------------------------------------------------------------------------
     #  initUI - UI initialization
@@ -87,14 +82,16 @@ class ChartWin(QMainWindow):
 
         # Add buttons to toolbar
         btn_before: QToolButton = QToolButton()
-        btn_before.setIcon(QIcon(self.icon_before))
+        btn_before.setIcon(QIcon(self.icons.LEFT))
+        btn_before.setStyleSheet("QToolButton {margin: 0 5px;}")
         btn_before.setStatusTip('goto previous PARAMETER')
         btn_before.clicked.connect(self.prev_chart)
         toolbar.addWidget(btn_before)
 
         # Add buttons to toolbar
         btn_after: QToolButton = QToolButton()
-        btn_after.setIcon(QIcon(self.icon_after))
+        btn_after.setIcon(QIcon(self.icons.RIGHT))
+        btn_after.setStyleSheet("QToolButton {margin: 0 5px;}")
         btn_after.setStatusTip('go to next PARAMETER')
         btn_after.clicked.connect(self.next_chart)
         toolbar.addWidget(btn_after)
@@ -102,6 +99,7 @@ class ChartWin(QMainWindow):
         toolbar.addSeparator()
 
         self.check_update: QCheckBox = QCheckBox('Hide Spec Limit(s)', self)
+        self.check_update.setStyleSheet("QCheckBox {margin: 0 5px;}")
         self.checkbox_state()
         self.check_update.stateChanged.connect(self.update_status)
         toolbar.addWidget(self.check_update)
@@ -125,7 +123,7 @@ class ChartWin(QMainWindow):
 
         # PowerPoint
         but_ppt: QToolButton = QToolButton()
-        but_ppt.setIcon(QIcon(self.icon_ppt))
+        but_ppt.setIcon(QIcon(self.icons.PPT))
         but_ppt.setStatusTip('generate PowerPoint slide(s)')
         but_ppt.clicked.connect(self.OnPPT)
         toolbar.addWidget(but_ppt)
