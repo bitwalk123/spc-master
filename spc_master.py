@@ -46,7 +46,10 @@ class SPCMaster(QMainWindow):
     chart = None
     db = None
 
-    # filter for file extentions to read
+    # Initial path to read Excel file
+    path_excel = os.path.expanduser('~/')
+
+    # Filter for file extentions to read
     filters: str = 'Excel file (*.xlsx *.xlsm);; All (*.*)'
 
     # configuraion file
@@ -250,7 +253,8 @@ class SPCMaster(QMainWindow):
     @Slot()
     def openFile(self):
         # file selection dialog
-        dialog: QFileDialog = QFileDialog()
+        dialog = QFileDialog()
+        dialog.setDirectory(self.path_excel)
         dialog.setNameFilter(self.filters)
 
         if not dialog.exec_():
@@ -261,6 +265,8 @@ class SPCMaster(QMainWindow):
         if self.sheets is not None:
             del self.sheets
         self.sheets: ExcelSPC = ExcelSPC(filename)
+        # update path to open
+        self.path_excel = os.path.dirname(filename)
 
         # check if sheets have valid format or not
         if self.sheets.valid is not True:
