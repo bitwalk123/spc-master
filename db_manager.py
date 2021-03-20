@@ -100,6 +100,11 @@ class DBManWin(QMainWindow):
         ent_name_db = QLineEdit()
         config_db = self.config['Database']
         dbname = config_db['DBNAME']
+        if len(dbname) > 0:
+            self.flag_db = True
+        else:
+            self.flag_db = False
+
         ent_name_db.setText(dbname)
         ent_name_db.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -181,6 +186,16 @@ class DBManWin(QMainWindow):
         # clear QComboBox
         combo.clear()
         combo.clearEditText()
+
+        if self.parent.sheets is None:
+            combo.setEnabled(False)
+            return
+
+        if self.db is None:
+            self.flag_db = False
+            combo.setEnabled(False)
+            return
+
         # DB Query and update QConboBox
         sql = "SELECT name_supplier_short FROM supplier;"
         out = self.db.get(sql)
