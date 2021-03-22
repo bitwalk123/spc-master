@@ -287,9 +287,11 @@ class DBManWin(QMainWindow):
     def updateDB(self, combo: QComboBox):
         name_supplier = combo.currentText()
 
+        # id_supplier
         sql1 = self.db.sql("SELECT id_supplier FROM supplier WHERE name_supplier_short = '?';", [name_supplier])
         print(sql1)
         out = self.db.get(sql1)
+        id_supplier = None
         for id in out:
             id_supplier = id[0]
         # TODO:
@@ -323,14 +325,17 @@ class DBManWin(QMainWindow):
                 num_part = ''
 
             print(num_part_excel, num_part)
+
+            # id_part
             sql2 = self.db.sql("SELECT id_part FROM part WHERE num_part = '?' AND id_supplier = ?;", [num_part, id_supplier])
             print(sql2)
             out = self.db.get(sql2)
+            id_part = None
             for id in out:
                 id_part = id[0]
             # TODO:
             if id_part is None:
-                print('NOT MATCH!')
+                print('NOT FOUND!')
                 continue
 
             print('PART# :', num_part, ', id_part =', id_part)
@@ -339,7 +344,28 @@ class DBManWin(QMainWindow):
             for name_param in list_param:
                 print(num_part_excel, name_param)
                 metrics = self.parent.sheets.get_metrics(num_part_excel, name_param)
-                # print(metrics)
+                param_lsl = metrics['LSL']
+                param_target = metrics['Target']
+                param_usl = metrics['USL']
+                param_charttype = metrics['Chart Type']
+                param_metrology = metrics['Metrology']
+                param_multiple = metrics['Multiple']
+                param_spectype = metrics['Spec Type']
+                param_lcl = metrics['LCL']
+                param_mean = metrics['Avg']
+                param_ucl = metrics['UCL']
+
+                # id_param
+                sql3 = self.db.sql("SELECT id_param FROM param WHERE id_supplier = ? AND id_part = ? AND name_param = '?';", [id_supplier, id_part, name_param])
+                print(sql3)
+                out = self.db.get(sql3)
+                id_param = None
+                for id in out:
+                    id_param = id[0]
+                # TODO:
+                if id_param is None:
+                    print('NOT FOUND!')
+                    continue
 
     # -------------------------------------------------------------------------
     #  closeEvent
