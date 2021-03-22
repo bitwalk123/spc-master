@@ -302,6 +302,7 @@ class DBManWin(QMainWindow):
         print('Suuplier :', name_supplier, ', id_supplier =', id_supplier)
 
         dict_header = {
+            'Key Parameter': 'num_key',
             'Parameter Name': 'name_param',
             'LSL': 'lsl',
             'Target': 'target',
@@ -346,6 +347,8 @@ class DBManWin(QMainWindow):
                 print(num_part_excel, name_param)
                 metrics = self.parent.sheets.get_metrics(num_part_excel, name_param)
 
+                param_num_key = metrics['Key Parameter']
+
                 param_lsl = metrics['LSL']
                 if math.isnan(param_lsl):
                     param_lsl = 'NULL'
@@ -386,12 +389,13 @@ class DBManWin(QMainWindow):
                 # TODO:
                 if id_param is None:
                     print('id_param NOT FOUND!')
-                    sql4 = self.db.sql("INSERT INTO param VALUES(NULL, ?, ?, '?', '?', ?, ?, ?, '?', '?', '?', '?', '?', ?, ?, ?);",
+                    sql4 = self.db.sql("INSERT INTO param VALUES(NULL, ?, ?, '?', '?', '?', ?, ?, ?, '?', '?', '?', '?', '?', ?, ?, ?);",
                                        [
                                            id_supplier,
                                            id_part,
                                            num_part_excel,
                                            name_param,
+                                           param_num_key,
                                            param_lsl,
                                            param_target,
                                            param_usl,
