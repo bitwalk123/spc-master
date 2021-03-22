@@ -14,7 +14,6 @@ from PySide2.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QStatusBar,
-    QTabWidget,
     QToolBar,
     QToolButton,
     QWidget,
