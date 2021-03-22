@@ -1,3 +1,4 @@
+import math
 import os.path
 import re
 from PySide2.QtCore import Slot
@@ -335,7 +336,7 @@ class DBManWin(QMainWindow):
                 id_part = id[0]
             # TODO:
             if id_part is None:
-                print('NOT FOUND!')
+                print('id_part NOT FOUND!')
                 continue
 
             print('PART# :', num_part, ', id_part =', id_part)
@@ -344,16 +345,36 @@ class DBManWin(QMainWindow):
             for name_param in list_param:
                 print(num_part_excel, name_param)
                 metrics = self.parent.sheets.get_metrics(num_part_excel, name_param)
+
                 param_lsl = metrics['LSL']
+                if math.isnan(param_lsl):
+                    param_lsl = 'NULL'
+
                 param_target = metrics['Target']
+                if math.isnan(param_target):
+                    param_target = 'NULL'
+
                 param_usl = metrics['USL']
+                if math.isnan(param_usl):
+                    param_usl = 'NULL'
+
                 param_charttype = metrics['Chart Type']
                 param_metrology = metrics['Metrology']
                 param_multiple = metrics['Multiple']
                 param_spectype = metrics['Spec Type']
+                param_frozen = metrics['CL Frozen']
+
                 param_lcl = metrics['LCL']
+                if math.isnan(param_lcl):
+                    param_lcl = 'NULL'
+
                 param_mean = metrics['Avg']
+                if math.isnan(param_mean):
+                    param_mean = 'NULL'
+
                 param_ucl = metrics['UCL']
+                if math.isnan(param_ucl):
+                    param_ucl = 'NULL'
 
                 # id_param
                 sql3 = self.db.sql("SELECT id_param FROM param WHERE id_supplier = ? AND id_part = ? AND name_param = '?';", [id_supplier, id_part, name_param])
@@ -364,8 +385,28 @@ class DBManWin(QMainWindow):
                     id_param = id[0]
                 # TODO:
                 if id_param is None:
-                    print('NOT FOUND!')
-                    continue
+                    print('id_param NOT FOUND!')
+                    sql4 = self.db.sql("INSERT INTO param VALUES(NULL, ?, ?, '?', '?', ?, ?, ?, '?', '?', '?', '?', '?', ?, ?, ?);",
+                                       [
+                                           id_supplier,
+                                           id_part,
+                                           num_part_excel,
+                                           name_param,
+                                           param_lsl,
+                                           param_target,
+                                           param_usl,
+                                           param_charttype,
+                                           param_metrology,
+                                           param_multiple,
+                                           param_spectype,
+                                           param_frozen,
+                                           param_lcl,
+                                           param_mean,
+                                           param_ucl
+                                       ]
+                                       )
+                    print(sql4)
+                    self.db.put(sql4)
 
     # -------------------------------------------------------------------------
     #  closeEvent
