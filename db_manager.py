@@ -35,6 +35,7 @@ class DBManWin(QMainWindow):
 
     # Regular Expression
     pattern1: str = re.compile(r'([a-zA-Z0-9\s]+).*SPC.*')
+    pattern2: str = re.compile(r'([0-9]{4}-[0-9]{3}-[0-9]{2}).*')
 
     def __init__(self, parent: QMainWindow):
         super().__init__(parent=parent)
@@ -157,6 +158,7 @@ class DBManWin(QMainWindow):
         but_db_add.setEnabled(self.flag_db)
         but_db_add.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         but_db_add.setStatusTip('add Excel data to database')
+        but_db_add.clicked.connect(lambda: self.updateDB(combo_name_supplier))
 
         grid.addWidget(lab_name_supplier, row, 0)
         grid.addWidget(combo_name_supplier, row, 1)
@@ -271,6 +273,73 @@ class DBManWin(QMainWindow):
                 self.config.write(file)
 
         ent.setText(dbname)
+
+    # -------------------------------------------------------------------------
+    #  updateDB
+    #  updating dB
+    #
+    #  argument
+    #    combo: QComboBox for suppliers
+    #
+    #  return
+    #    (none)
+    # -------------------------------------------------------------------------
+    def updateDB(self, combo: QComboBox):
+        name_supplier = combo.currentText()
+
+        sql1 = self.db.sql("SELECT id_supplier FROM supplier WHERE name_supplier_short = '?';", [name_supplier])
+        print(sql1)
+        out = self.db.get(sql1)
+        for id in out:
+            id_supplier = id[0]
+        # TODO:
+        if id_supplier is None:
+            return
+
+        print('Suuplier :', name_supplier, ', id_supplier =', id_supplier)
+
+        dict_header = {
+            'Parameter Name': 'name_param',
+            'LSL': 'lsl',
+            'Target': 'target',
+            'USL': 'usl',
+            'Chart Type': 'charttype',
+            'Metrology': 'metrology',
+            'Multiple': 'multiple',
+            'Spec Type': 'spectype',
+            'CL Frozen': 'frozen',
+            'LCL': 'lcl',
+            'Avg': 'mean',
+            'UCL': 'ucl',
+        }
+
+        list_part = self.parent.sheets.get_unique_part_list()
+        for num_part_excel in list_part:
+
+            match: bool = self.pattern2.match(num_part_excel)
+            if match:
+                num_part = match.group(1)
+            else:
+                num_part = ''
+
+            print(num_part_excel, num_part)
+            sql2 = self.db.sql("SELECT id_part FROM part WHERE num_part = '?' AND id_supplier = ?;", [num_part, id_supplier])
+            print(sql2)
+            out = self.db.get(sql2)
+            for id in out:
+                id_part = id[0]
+            # TODO:
+            if id_part is None:
+                print('NOT MATCH!')
+                continue
+
+            print('PART# :', num_part, ', id_part =', id_part)
+
+            list_param = self.parent.sheets.get_param_list(num_part_excel)
+            for name_param in list_param:
+                print(num_part_excel, name_param)
+                metrics = self.parent.sheets.get_metrics(num_part_excel, name_param)
+                # print(metrics)
 
     # -------------------------------------------------------------------------
     #  closeEvent
