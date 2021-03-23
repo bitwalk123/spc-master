@@ -1,5 +1,6 @@
 import math
 import os.path
+import pandas as pd
 import re
 from PySide2.QtCore import Slot
 from PySide2.QtGui import QIcon
@@ -289,13 +290,7 @@ class DBManWin(QMainWindow):
         name_supplier = combo.currentText()
 
         # id_supplier
-        sql1 = self.db.sql("SELECT id_supplier FROM supplier WHERE name_supplier_short = '?';", [name_supplier])
-        print(sql1)
-        out = self.db.get(sql1)
-        id_supplier = None
-        for id in out:
-            id_supplier = id[0]
-        # TODO:
+        id_supplier = self.select_id_supplier(name_supplier)
         if id_supplier is None:
             return
 
@@ -329,13 +324,7 @@ class DBManWin(QMainWindow):
             print(num_part_excel, num_part)
 
             # id_part
-            sql2 = self.db.sql("SELECT id_part FROM part WHERE num_part = '?' AND id_supplier = ?;", [num_part, id_supplier])
-            print(sql2)
-            out = self.db.get(sql2)
-            id_part = None
-            for id in out:
-                id_part = id[0]
-            # TODO:
+            id_part = self.select_id_part(id_supplier, num_part)
             if id_part is None:
                 print('id_part NOT FOUND!')
                 continue
@@ -344,73 +333,170 @@ class DBManWin(QMainWindow):
 
             list_param = self.parent.sheets.get_param_list(num_part_excel)
             for name_param in list_param:
-                print(num_part_excel, name_param)
+                # print(num_part_excel, name_param)
                 metrics = self.parent.sheets.get_metrics(num_part_excel, name_param)
-
-                param_num_key = metrics['Key Parameter']
-
-                param_lsl = metrics['LSL']
-                if math.isnan(param_lsl):
-                    param_lsl = 'NULL'
-
-                param_target = metrics['Target']
-                if math.isnan(param_target):
-                    param_target = 'NULL'
-
-                param_usl = metrics['USL']
-                if math.isnan(param_usl):
-                    param_usl = 'NULL'
-
-                param_charttype = metrics['Chart Type']
-                param_metrology = metrics['Metrology']
-                param_multiple = metrics['Multiple']
-                param_spectype = metrics['Spec Type']
-                param_frozen = metrics['CL Frozen']
-
-                param_lcl = metrics['LCL']
-                if math.isnan(param_lcl):
-                    param_lcl = 'NULL'
-
-                param_mean = metrics['Avg']
-                if math.isnan(param_mean):
-                    param_mean = 'NULL'
-
-                param_ucl = metrics['UCL']
-                if math.isnan(param_ucl):
-                    param_ucl = 'NULL'
+                param = self.get_param(metrics)
 
                 # id_param
-                sql3 = self.db.sql("SELECT id_param FROM param WHERE id_supplier = ? AND id_part = ? AND name_param = '?';", [id_supplier, id_part, name_param])
-                print(sql3)
-                out = self.db.get(sql3)
-                id_param = None
-                for id in out:
-                    id_param = id[0]
-                # TODO:
+                id_param = self.select_id_param(id_part, id_supplier, name_param)
                 if id_param is None:
-                    print('id_param NOT FOUND!')
-                    sql4 = self.db.sql("INSERT INTO param VALUES(NULL, ?, ?, '?', '?', '?', ?, ?, ?, '?', '?', '?', '?', '?', ?, ?, ?);",
-                                       [
-                                           id_supplier,
-                                           id_part,
-                                           num_part_excel,
-                                           name_param,
-                                           param_num_key,
-                                           param_lsl,
-                                           param_target,
-                                           param_usl,
-                                           param_charttype,
-                                           param_metrology,
-                                           param_multiple,
-                                           param_spectype,
-                                           param_frozen,
-                                           param_lcl,
-                                           param_mean,
-                                           param_ucl
-                                       ]
-                                       )
-                    print(sql4)
-                    self.db.put(sql4)
+                    self.insert_param(id_part, id_supplier, name_param, num_part_excel, param)
+                else:
+                    print('### SPC Data')
+                    print('> PART# :', num_part, ', Parameter :', name_param, ', id_param =', id_param)
+                    df: pd.DataFrame = self.parent.sheets.get_part_all(num_part_excel)
+                    for r in range(len(df)):
+                        df_r: pd.Series = df.iloc[r]
+                        # batch
+                        # id_batch INTEGER
+                        # 'Sample' => sample INTEGER,
+                        # 'Date' => timestamp INTEGER,
+                        # 'Job ID or Lot ID' => id_lot TEXT,
+                        # 'Serial Number' => serial,
+                        sample = df_r['Sample']
+                        timestamp = int(pd.to_datetime(df_r['Date']).timestamp())
+
+                        id_lot = df_r['Job ID or Lot ID']
+                        if math.isnan(id_lot):
+                            id_lot = ''
+
+                        serial = df_r['Serial Number']
+
+                        measured = df_r[name_param]
+                        if math.isnan(measured):
+                            measured = 'NULL'
+
+                        # print(sample, timestamp, id_lot, serial, value)
+
+                        # id_batch
+                        id_batch = self.select_id_batch(sample, serial, timestamp)
+                        if id_batch is None:
+                            self.insert_batch(id_lot, sample, serial, timestamp)
+                            id_batch = self.select_id_batch(sample, serial, timestamp)
+
+                        # id_measure
+                        id_measure = self.select_id_measure(id_batch, id_param)
+                        if id_measure is None:
+                            self.insert_measure(id_batch, id_param, measured)
+
+    def get_param(self, metrics):
+        param = {}
+        # param_num_key = metrics['Key Parameter']
+        param['num_key'] = metrics['Key Parameter']
+        # param_lsl = metrics['LSL']
+        param['lsl'] = metrics['LSL']
+        if math.isnan(param['lsl']):
+            param['lsl'] = 'NULL'
+        # param_target = metrics['Target']
+        param['target'] = metrics['Target']
+        if math.isnan(param['target']):
+            param['target'] = 'NULL'
+        # param_usl = metrics['USL']
+        param['usl'] = metrics['USL']
+        if math.isnan(param['usl']):
+            param['usl'] = 'NULL'
+        # param_charttype = metrics['Chart Type']
+        param['charttype'] = metrics['Chart Type']
+        # param_metrology = metrics['Metrology']
+        param['metrology'] = metrics['Metrology']
+        # param_multiple = metrics['Multiple']
+        param['multiple'] = metrics['Multiple']
+        # param_spectype = metrics['Spec Type']
+        param['spectype'] = metrics['Spec Type']
+        # param_frozen = metrics['CL Frozen']
+        param['frozen'] = metrics['CL Frozen']
+        # param_lcl = metrics['LCL']
+        param['lcl'] = metrics['LCL']
+        if math.isnan(param['lcl']):
+            param['lcl'] = 'NULL'
+        # param_mean = metrics['Avg']
+        param['mean'] = metrics['Avg']
+        if math.isnan(param['mean']):
+            param['mean'] = 'NULL'
+        # param_ucl = metrics['UCL']
+        param['ucl'] = metrics['UCL']
+        if math.isnan(param['ucl']):
+            param['ucl'] = 'NULL'
+        return param
+
+    def select_id_supplier(self, name_supplier):
+        sql = self.db.sql("SELECT id_supplier FROM supplier WHERE name_supplier_short = '?';", [name_supplier])
+        # print(sql1)
+        out = self.db.get(sql)
+        id_supplier = None
+        for id in out:
+            id_supplier = id[0]
+        return id_supplier
+
+    def select_id_part(self, id_supplier, num_part):
+        sql = self.db.sql("SELECT id_part FROM part WHERE num_part = '?' AND id_supplier = ?;", [num_part, id_supplier])
+        # print(sql2)
+        out = self.db.get(sql)
+        id_part = None
+        for id in out:
+            id_part = id[0]
+        return id_part
+
+    def select_id_param(self, id_part, id_supplier, name_param):
+        sql = self.db.sql("SELECT id_param FROM param WHERE id_supplier = ? AND id_part = ? AND name_param = '?';", [id_supplier, id_part, name_param])
+        # print(sql3)
+        out = self.db.get(sql)
+        id_param = None
+        for id in out:
+            id_param = id[0]
+        return id_param
+
+    def insert_param(self, id_part, id_supplier, name_param, num_part_excel, param):
+        sql = self.db.sql("INSERT INTO param VALUES(NULL, ?, ?, '?', '?', '?', ?, ?, ?, '?', '?', '?', '?', '?', ?, ?, ?);",
+                          [
+                              id_supplier,
+                              id_part,
+                              num_part_excel,
+                              name_param,
+                              param['num_key'],
+                              param['lsl'],
+                              param['target'],
+                              param['usl'],
+                              param['charttype'],
+                              param['metrology'],
+                              param['multiple'],
+                              param['spectype'],
+                              param['frozen'],
+                              param['lcl'],
+                              param['mean'],
+                              param['ucl']
+                          ]
+                          )
+        # print(sql4)
+        self.db.put(sql)
+
+    def select_id_batch(self, sample, serial, timestamp):
+        sql = self.db.sql("SELECT id_batch FROM batch WHERE sample = ? AND timestamp = ? AND serial = '?';", [sample, timestamp, serial])
+        out = self.db.get(sql)
+        id_batch = None
+        for id in out:
+            id_batch = id[0]
+        return id_batch
+
+    def insert_batch(self, id_lot, sample, serial, timestamp):
+        sql = self.db.sql("INSERT INTO batch VALUES(NULL, ?, ?, '?', '?');", [sample, timestamp, id_lot, serial])
+        # print(sql)
+        self.db.put(sql)
+
+    def select_id_measure(self, id_batch, id_param):
+        sql = self.db.sql("SELECT id_measure FROM measure WHERE id_param = ? AND id_batch = ?;", [id_param, id_batch])
+        # print(sql)
+        out = self.db.get(sql)
+        id_measure = None
+        for id in out:
+            id_measure = id[0]
+
+        return id_measure
+
+    def insert_measure(self, id_batch, id_param, measured):
+        sql = self.db.sql("INSERT INTO measure VALUES(NULL, ?, ?, ?);", [id_param, id_batch, measured])
+        # print(sql)
+        self.db.put(sql)
 
     # -------------------------------------------------------------------------
     #  closeEvent

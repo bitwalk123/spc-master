@@ -211,9 +211,27 @@ class ExcelSPC():
     #    (none)
     #
     #  return
-    #    pandas dataframe of specified name_part tab
+    #    pandas dataframe of specified name_part tab, eliminating 'Hide'
     # -------------------------------------------------------------------------
     def get_part(self, name_part):
+        df1 = self.get_part_all(name_part)
+
+        # eliminate 'Hide' data
+        df2 = df1[df1['Data Type'] != 'Hide']
+
+        return df2
+
+    # -------------------------------------------------------------------------
+    #  get_part
+    #  get dataframe of specified name_part tab
+    #
+    #  argument
+    #    (none)
+    #
+    #  return
+    #    pandas dataframe of specified name_part tab (all data)
+    # -------------------------------------------------------------------------
+    def get_part_all(self, name_part):
         # dataframe of specified name_part tab
         df = self.sheets[name_part]
 
@@ -221,12 +239,11 @@ class ExcelSPC():
         df = df.dropna(how='all')
 
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-        #  the first row od data sheet is used for 'Create Charts' button for
+        #  the first row of data sheet is used for 'Create Charts' button for
         #  the Excel macro
         #
         #  So, new dataframe is created for this application
         # _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_
-
         # obtain number of rows on this dataframe
         row_size = len(df)
 
@@ -240,10 +257,7 @@ class ExcelSPC():
         # for colname in ['Sample', 'Date', 'Job ID or Lot ID', 'Serial Number', 'Data Type']:
         df1 = df1.dropna(subset=['Data Type'])
 
-        # eliminate 'Hide' data
-        df2 = df1[df1['Data Type'] != 'Hide']
-
-        return df2
+        return df1
 
     # -------------------------------------------------------------------------
     #  get_sheets
