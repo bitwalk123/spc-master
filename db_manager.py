@@ -12,6 +12,7 @@ from PySide2.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -168,8 +169,22 @@ class DBManWin(QMainWindow):
 
         row += 1
 
+        # for status bar
+        statusLabel = QLabel("Showing Progress")
+        statusLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        self.progressbar = QProgressBar()
+        self.progressbar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(100)
+        self.progressbar.setValue(10)
+
+        # statusBar = QStatusBar()
+
         # Status Bar
         self.statusbar: QStatusBar = QStatusBar()
+        self.statusbar.addWidget(statusLabel, 1)
+        self.statusbar.addWidget(self.progressbar, 2)
         self.setStatusBar(self.statusbar)
 
         self.resize(self.w_init, self.h_init)
