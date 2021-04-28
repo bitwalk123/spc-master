@@ -10,7 +10,6 @@ import pathlib
 import platform
 import re
 import subprocess
-import sys
 import tempfile
 
 from PySide2.QtCore import Qt
@@ -98,7 +97,7 @@ class ChartWin(QMainWindow):
 
         toolbar.addSeparator()
 
-        self.check_update: QCheckBox = QCheckBox('Hide Spec Limit(s)', self)
+        self.check_update = QCheckBox('Hide Spec Limit(s)', self)
         self.check_update.setStyleSheet("QCheckBox {margin: 0 5px;}")
         self.checkbox_state()
         self.check_update.stateChanged.connect(self.update_status)
@@ -118,7 +117,7 @@ class ChartWin(QMainWindow):
 
         toolbar.addSeparator()
 
-        self.check_all_slides: QCheckBox = QCheckBox('All parameters', self)
+        self.check_all_slides = QCheckBox('All parameters', self)
         toolbar.addWidget(self.check_all_slides)
 
         # PowerPoint
@@ -226,7 +225,7 @@ class ChartWin(QMainWindow):
     # -------------------------------------------------------------------------
     def get_part_param(self, row: int):
         df_master: pd.DataFrame = self.sheets.get_master()
-        df_row: int = df_master.iloc[row]
+        df_row: pd.Series = df_master.iloc[row]
         part: str = df_row['Part Number']
         param: str = df_row['Parameter Name']
 
@@ -503,9 +502,12 @@ class Trend():
         # =====================================================================
         #  CAUTION! THIS IS TENTATIVE SOLUTION FOR NAN VALUES
         # =====================================================================
-        for i in range(y.size):
-            if pd.isna(y[i + 1]):
-                y.iloc[i + 1] = 0.0
+        if y.isnull().any():
+            y2 = y.copy()
+            for i in range(y2.size):
+                if pd.isna(y2[i + 1]):
+                    y2[i + 1] = 0
+            y = y2
 
         # -----------------------------------------------------------------
         # add first y axis
@@ -754,41 +756,41 @@ class Trend():
     #    (none)
     # -------------------------------------------------------------------------
     def add_y_axis_labels(self, fig, metrics):
-        list_labels_left: list[str] = []
-        list_labels_right: list[str] = []
+        list_labels_left = []
+        list_labels_right = []
         if metrics['Spec Type'] == 'Two-Sided':
             # LEFT
             if self.flag_no_CL is False:
-                labels_left: list[str] = ['LCL', 'Target', 'UCL']
+                labels_left = ['LCL', 'Target', 'UCL']
             else:
-                labels_left: list[str] = ['Target']
+                labels_left = ['Target']
 
             if self.sheets.get_SL_flag(self.row) is False:
                 labels_left.extend(['LSL', 'USL'])
 
             # RIGHT
             if self.flag_no_CL is False:
-                labels_right: list[str] = ['RLCL', 'Avg', 'RUCL']
+                labels_right = ['RLCL', 'Avg', 'RUCL']
             else:
-                labels_right: list[str] = ['Avg']
+                labels_right = ['Avg']
         elif metrics['Spec Type'] == 'One-Sided':
             # LEFT
             if self.flag_no_CL is False:
-                labels_left: list[str] = ['UCL']
+                labels_left = ['UCL']
             else:
-                labels_left: list[str] = []
+                labels_left = []
 
             if self.sheets.get_SL_flag(self.row) is False:
                 labels_left.extend(['USL'])
 
             # RIGHT
             if self.flag_no_CL is False:
-                labels_right: list[str] = ['Avg', 'RUCL']
+                labels_right = ['Avg', 'RUCL']
             else:
-                labels_right: list[str] = ['Avg']
+                labels_right = ['Avg']
         else:
-            labels_left: list[str] = []
-            labels_right: list[str] = ['Avg']
+            labels_left = []
+            labels_right = ['Avg']
 
         # Check whether defined label has number or not
         for label in labels_left:
@@ -912,7 +914,7 @@ class Trend():
 
         ax.set_yticks(list(ax.get_yticks()) + extraticks)
         # update drawing to reflect new ticks
-        fig.canvas.draw();
+        fig.canvas.draw()
 
     # -------------------------------------------------------------------------
     #  get_tick_label_format
