@@ -500,6 +500,13 @@ class Trend():
 
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
 
+        # =====================================================================
+        #  CAUTION! THIS IS TENTATIVE SOLUTION FOR NAN VALUES
+        # =====================================================================
+        for i in range(y.size):
+            if pd.isna(y[i + 1]):
+                y.iloc[i + 1] = 0.0
+
         # -----------------------------------------------------------------
         # add first y axis
         self.ax1 = fig.add_subplot(111, title=name_param)

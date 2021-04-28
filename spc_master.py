@@ -31,7 +31,7 @@ from worksheet import SheetMaster
 class SPCMaster(QMainWindow):
     # Application information
     app_name: str = 'SPC Master'
-    app_ver: str = '0.6 (alpha)'
+    app_ver: str = '0.6.1 (alpha)'
 
     # initial windows position and size
     x_init: int = 100
