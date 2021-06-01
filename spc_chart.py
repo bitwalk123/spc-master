@@ -500,13 +500,14 @@ class Trend():
         fig = plt.figure(dpi=100, figsize=(10, 3.5))
 
         # =====================================================================
-        #  CAUTION! THIS IS TENTATIVE SOLUTION FOR NAN VALUES
+        #  CAUTION! THIS IS TENTATIVE SOLUTION FOR NAN VALUES,
+        #  JUST SET ZERO FOR NAN VALUE
         # =====================================================================
         if y.isnull().any():
             y2 = y.copy()
             for i in range(y2.size):
-                if pd.isna(y2[i + 1]):
-                    y2[i + 1] = 0
+                if pd.isna(y2.iloc[i]):
+                    y2.iloc[i] = 0
             y = y2
 
         # -----------------------------------------------------------------

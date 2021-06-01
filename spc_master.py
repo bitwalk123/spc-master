@@ -291,7 +291,7 @@ class SPCMaster(QMainWindow):
     #    (none)
     # -------------------------------------------------------------------------
     def dbMan(self, event):
-        self.db_man =DBManWin(self)
+        self.db_man = DBManWin(self)
 
     # -------------------------------------------------------------------------
     #  closeEvent
